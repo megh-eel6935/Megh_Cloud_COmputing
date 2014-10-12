@@ -1,0 +1,110 @@
+<!DOCTYPE HTML>
+<!--
+	Alpha by HTML5 UP
+	html5up.net | @n33co
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html>
+	<head>
+		<title>Megh - Home</title>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+		<meta name="description" content="" />
+		<meta name="keywords" content="" />
+		<!--[if lte IE 8]><script src="css/ie/html5shiv.js"></script><![endif]-->
+		<script src="js/jquery.min.js"></script>
+		<script src="js/jquery.dropotron.min.js"></script>
+		<script src="js/jquery.scrollgress.min.js"></script>
+		<script src="js/skel.min.js"></script>
+		<script src="js/skel-layers.min.js"></script>
+		<script src="js/init.js"></script>
+		<script src="user.js"></script>
+		<noscript>
+			<link rel="stylesheet" href="css/skel.css" />
+			<link rel="stylesheet" href="css/style.css" />
+			<link rel="stylesheet" href="css/style-wide.css" />
+		</noscript>
+		
+		<!--[if lte IE 8]><link rel="stylesheet" href="css/ie/v8.css" /><![endif]-->
+	</head>
+	<body>
+
+
+		<!-- Header -->
+			<header id="header">
+				<h1><a href="/">Megh</a></h1>
+				<nav id="nav">
+					<ul>
+						<li><a href="#">Hi  {{.}}</a></li>
+						<li><a href="/groups">Groups</a></li>
+						<li><a href="" >Help</a></li>
+						<li><a href="/logout" class="button">Logout</a></li>
+					</ul>
+				</nav>
+			</header>
+
+		<!-- Main -->
+			<section id="main" class="container">
+				<header>
+					<h2>Welcome</h2>
+				</header>
+				<div class="row">
+
+					<div class="12u">
+					
+
+					<form id="uploadform" method="POST" action="/uploadfile"  enctype="multipart/form-data" hidden>
+				    <fieldset>
+				    <input type="file" name="file" placeholder="Upload file" />
+				      
+				      <input type="submit" value="Upload" />
+				    </fieldset>
+				  </form>
+
+
+					<form method="post" action="/messages">
+						
+						<div class="row uniform half">
+							<div class="12u">
+							<input type="text" name="message" value="" placeholder="Enter your message" />
+							
+							</div>
+						</div>
+						<br>
+						<input type="submit" value="Send" />	
+						<input type="button" id="filebutton" value="Upload file" />	
+						</form>
+					<div class="12u">
+
+						<!-- Text -->
+							<section class="box">
+
+							<table class="table">
+							    <tbody id="k">
+
+							    
+							    </tbody>  
+							    </table>
+								
+							</section>
+
+					</div>
+				</div>
+			</section>
+			
+		<!-- Footer -->
+			<footer id="footer">
+				<ul class="icons">
+					<li><a href="#" class="icon fa-twitter"><span class="label">Twitter</span></a></li>
+					<li><a href="#" class="icon fa-facebook"><span class="label">Facebook</span></a></li>
+					<li><a href="#" class="icon fa-instagram"><span class="label">Instagram</span></a></li>
+					<li><a href="#" class="icon fa-github"><span class="label">Github</span></a></li>
+					<li><a href="#" class="icon fa-dribbble"><span class="label">Dribbble</span></a></li>
+					<li><a href="#" class="icon fa-google-plus"><span class="label">Google+</span></a></li>
+				</ul>
+				<ul class="copyright">
+					<li>&copy; Untitled. All rights reserved.</li><li>Design: <a href="http://html5up.net">HTML5 UP</a></li>
+				</ul>
+			</footer>
+
+	</body>
+</html>
