@@ -64,19 +64,20 @@
 					<form method="post" action="/register">
 						<div class="row uniform half">
 							<div class="12u">
-								<input type="text" name="name" id="name" value="" placeholder="Name" />
+							<div color="red">{{.}}</div>
+								<input type="text" name="nickname" id="name" value="" placeholder="Name" />
 							</div>
 							
 						</div>
 						<div class="row uniform half">
 							<div class="12u">
-							<input type="text" name="email" id="email" value="" placeholder="Email" />
+							<input type="email" name="email" id="email" value="" placeholder="Email" />
 								
 							</div>
 						</div>
 						<div class="row uniform half">
 							<div class="12u">
-								<input type="text" name="password" id="subject" value="" placeholder="Password" />
+								<input type="password" name="password" id="subject" value="" placeholder="Password" />
 							</div>
 						</div>
 						<div class="row uniform">
