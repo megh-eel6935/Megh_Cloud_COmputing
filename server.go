@@ -1,13 +1,14 @@
 package main
 
 import (
+	"code.google.com/p/go-uuid/uuid"
 	"code.google.com/p/go.crypto/bcrypt"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"github.com/beatrichartz/martini-sockets"
 	"github.com/go-martini/martini"
 	_ "github.com/go-sql-driver/mysql"
-	//"code.google.com/p/go-uuid/uuid"
 	"github.com/gorilla/securecookie"
 	"github.com/kr/s3/s3util"
 	"github.com/martini-contrib/binding"
@@ -15,13 +16,12 @@ import (
 	"github.com/martini-contrib/sessions"
 	"github.com/smugmug/godynamo/conf"
 	"github.com/smugmug/godynamo/conf_file"
-	//  ep "github.com/smugmug/godynamo/endpoint"
-	// query "github.com/smugmug/godynamo/endpoints/query"
+	ep "github.com/smugmug/godynamo/endpoint"
 	get "github.com/smugmug/godynamo/endpoints/get_item"
 	put "github.com/smugmug/godynamo/endpoints/put_item"
+	query "github.com/smugmug/godynamo/endpoints/query"
 	"github.com/smugmug/godynamo/types/attributevalue"
-	//"github.com/smugmug/godynamo/types/condition"
-	"encoding/json"
+	"github.com/smugmug/godynamo/types/condition"
 	"io"
 	"net/http"
 	"strconv"
@@ -373,43 +373,36 @@ func main() {
 
 	m.Post("/messages", binding.Form(Msg{}), func(msg Msg, r render.Render, request *http.Request) {
 
-		var iddb string
-
-		userName := getUserName(request)
-
-		errs := db.QueryRow("select id from username where username='" + userName + "'").Scan(&iddb)
-
-		if errs == nil {
-			_, err := db.Query("insert into messages(metadata,filetype,user_id,timestamp) values(?,'text',?,?)", msg.Message, iddb, time.Now().UTC())
-			if err != nil {
-				panic(err.Error())
-				// proper error handling instead of panic in your app
-			}
+		username := getUserName(request)
+		present := validateUsername(username)
+		if present {
 			r.HTML(200, "user", nil)
+			if insertToUserData(username, msg.Message, "text") {
+				r.JSON(200, map[string]interface{}{"status": "success"})
+			} else {
+				r.JSON(200, map[string]interface{}{"status": "failure"})
+			}
 		} else {
 
-			panic(errs.Error())
+			r.JSON(200, map[string]interface{}{"Access denied": "Unauthorized request"})
 		}
 
 	})
 
 	m.Post("/urls", binding.Form(Msg{}), func(msg Msg, r render.Render, request *http.Request) {
 
-		var iddb string
-
-		userName := getUserName(request)
-
-		errs := db.QueryRow("select id from username where username='" + userName + "'").Scan(&iddb)
-		if errs == nil {
-			_, err := db.Query("insert into messages(metadata,filetype,user_id) values(?,'url',?)", msg.Message, iddb)
-			if err != nil {
-				panic(err.Error())
-				// proper error handling instead of panic in your app
-			}
+		username := getUserName(request)
+		present := validateUsername(username)
+		if present {
 			r.HTML(200, "user", nil)
+			if insertToUserData(username, msg.Message, "url") {
+				r.JSON(200, map[string]interface{}{"status": "success"})
+			} else {
+				r.JSON(200, map[string]interface{}{"status": "failure"})
+			}
 		} else {
 
-			panic(errs.Error())
+			r.JSON(200, map[string]interface{}{"Access denied": "Unauthorized request"})
 		}
 
 	})
@@ -454,7 +447,7 @@ func main() {
 
 		userName := getUserName(request)
 
-		db.QueryRow("select id from username where username='" + userName + "'").Scan(&iddb)
+		getGroupsList(userName)
 
 		if userName == "" || iddb == "" {
 
@@ -466,30 +459,19 @@ func main() {
 	})
 
 	m.Post("/creategroup", binding.Form(Msg{}), func(msg Msg, r render.Render, request *http.Request) {
-		var iddb string
-		var groupid string
-		userName := getUserName(request)
-
-		errs := db.QueryRow("select id from username where username='" + userName + "'").Scan(&iddb)
-		if errs == nil {
-			_, err1 := db.Query("insert into groups(group_name,group_admin_id,group_timestamp) values(?,?,?)", msg.Message, iddb, time.Now().UTC())
-
-			if err1 != nil {
-				fmt.Println("err1 error")
-				panic(err1.Error())
-				// proper error handling instead of panic in your app
+		username := getUserName(request)
+		present := validateUsername(username)
+		if present {
+			r.HTML(200, "user", nil)
+			if createGroup(username, msg.Message) {
+				r.JSON(200, map[string]interface{}{"status": "success"})
+			} else {
+				r.JSON(200, map[string]interface{}{"status": "failure"})
 			}
-			db.QueryRow("select group_id from groups where group_admin_id='" + iddb + "' and group_name='" + msg.Message + "'").Scan(&groupid)
-
-			fmt.Println(groupid, iddb)
-			db.Query("insert into usergroups(group_id,user_id) values(?,?)", groupid, iddb)
-
-			r.JSON(200, map[string]interface{}{"status": "Success"})
 		} else {
-			fmt.Println("errs error")
-			panic(errs.Error())
-		}
 
+			r.JSON(200, map[string]interface{}{"Access denied": "Unauthorized request"})
+		}
 	})
 
 	m.Get("/getgroupdatabyid/:id", func(r render.Render, params martini.Params, request *http.Request) {
@@ -585,10 +567,97 @@ func main() {
 	m.Run()
 
 }
+func getGroupsList(name string) {
 
-func postToUserData() {
+	q := query.NewQuery()
+	q.TableName = "usergroups"
+	q.Select = ep.SELECT_ALL
+	kc := condition.NewCondition()
+	kc.AttributeValueList = make([]*attributevalue.AttributeValue, 1)
+	kc.AttributeValueList[0] = &attributevalue.AttributeValue{S: name}
+	kc.ComparisonOperator = query.OP_EQ
+	q.Limit = 10000
+	q.KeyConditions["username"] = kc
+	json, _ := json.Marshal(q)
+	fmt.Printf("JSON:%s\n", string(json))
+	body, code, err := q.EndpointReq()
+	if err != nil || code != http.StatusOK {
+		fmt.Printf("query failed %d %v %s\n", code, err, body)
+	}
+	fmt.Printf("%v\n%v\n%v\n", body, code, err)
 
 }
+func createGroup(username string, groupname string) bool {
+
+	ctime := fmt.Sprintf("%v", time.Now().Unix())
+	groupid := uuid.New()
+	put1 := put.NewPutItem()
+	put1.TableName = "groups"
+	put1.Item["group_id"] = &attributevalue.AttributeValue{S: groupid}
+	put1.Item["group_name"] = &attributevalue.AttributeValue{S: groupname}
+	put1.Item["group_admin"] = &attributevalue.AttributeValue{S: username}
+	put1.Item["timestamp"] = &attributevalue.AttributeValue{N: ctime}
+
+	body1, code1, err1 := put1.EndpointReq()
+	if err1 != nil || code1 != http.StatusOK {
+		fmt.Printf("put failed %d %v %s\n", code1, err1, body1)
+		return false
+	} else {
+
+		put2 := put.NewPutItem()
+		put2.TableName = "usergroups"
+		put2.Item["usergroup_id"] = &attributevalue.AttributeValue{S: uuid.New()}
+		put2.Item["username"] = &attributevalue.AttributeValue{S: username}
+		put2.Item["group_id"] = &attributevalue.AttributeValue{S: groupid}
+		put2.Item["group_name"] = &attributevalue.AttributeValue{S: groupname}
+		put2.Item["timestamp"] = &attributevalue.AttributeValue{N: ctime}
+
+		body2, code2, err2 := put2.EndpointReq()
+		if err2 != nil || code2 != http.StatusOK {
+			fmt.Printf("put failed %d %v %s\n", code2, err2, body2)
+			return false
+		} else {
+			return true
+		}
+
+	}
+}
+func validateUsername(name string) bool {
+	get1 := get.NewGetItem()
+	get1.TableName = "users"
+	get1.Key["username"] = &attributevalue.AttributeValue{S: name}
+
+	body, code, err := get1.EndpointReq()
+
+	if len(body) <= 2 || err != nil || code != http.StatusOK {
+		return false
+	} else {
+		return true
+	}
+}
+
+func insertToUserData(username string, content string, ctype string) bool {
+
+	ctime := fmt.Sprintf("%v", time.Now().Unix())
+	put1 := put.NewPutItem()
+	put1.TableName = "userdata"
+	put1.Item["userdata_id"] = &attributevalue.AttributeValue{S: uuid.New()}
+	put1.Item["username"] = &attributevalue.AttributeValue{S: username}
+	put1.Item["content"] = &attributevalue.AttributeValue{S: content}
+	put1.Item["content_type"] = &attributevalue.AttributeValue{S: ctype}
+	put1.Item["timestamp"] = &attributevalue.AttributeValue{N: ctime}
+
+	body, code, err := put1.EndpointReq()
+
+	if err != nil || code != http.StatusOK {
+		fmt.Printf("put failed %d %v %s\n", code, err, body)
+		return false
+	} else {
+		return true
+	}
+
+}
+
 func uploadHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, rend render.Render) {
 	file, header, err := r.FormFile("file") // the FormFile function takes in the POST input id file
 	defer file.Close()
