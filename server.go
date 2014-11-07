@@ -1,17 +1,27 @@
 package main
 
 import (
-    "code.google.com/p/go.crypto/bcrypt"
+	"code.google.com/p/go.crypto/bcrypt"
 	"database/sql"
 	"fmt"
 	"github.com/beatrichartz/martini-sockets"
 	"github.com/go-martini/martini"
 	_ "github.com/go-sql-driver/mysql"
+	//"code.google.com/p/go-uuid/uuid"
 	"github.com/gorilla/securecookie"
 	"github.com/kr/s3/s3util"
 	"github.com/martini-contrib/binding"
 	"github.com/martini-contrib/render"
 	"github.com/martini-contrib/sessions"
+	"github.com/smugmug/godynamo/conf"
+	"github.com/smugmug/godynamo/conf_file"
+	//  ep "github.com/smugmug/godynamo/endpoint"
+	// query "github.com/smugmug/godynamo/endpoints/query"
+	get "github.com/smugmug/godynamo/endpoints/get_item"
+	put "github.com/smugmug/godynamo/endpoints/put_item"
+	"github.com/smugmug/godynamo/types/attributevalue"
+	//"github.com/smugmug/godynamo/types/condition"
+	"encoding/json"
 	"io"
 	"net/http"
 	"strconv"
@@ -35,7 +45,6 @@ type Register struct {
 	Password string `form:"password"`
 	Nickname string `form:"nickname"`
 }
-
 
 type Project struct {
 	Id   int    `json:"id"`
@@ -237,8 +246,13 @@ func GetGroupData(db *sql.DB, id string) []Groupdata {
 
 func main() {
 
-	s3util.DefaultConfig.AccessKey = "your access key"
-	s3util.DefaultConfig.SecretKey = "your security key"
+	conf_file.Read()
+	if conf.Vals.Initialized == false {
+		panic("the conf.Vals global conf struct has not been initialized")
+	}
+
+	s3util.DefaultConfig.AccessKey = ""
+	s3util.DefaultConfig.SecretKey = ""
 
 	m := martini.Classic()
 	m.Use(render.Renderer())
@@ -277,20 +291,36 @@ func main() {
 
 	m.Post("/login", binding.Form(Signin{}), func(signin Signin, r render.Render, response http.ResponseWriter, s sessions.Session) {
 
-		var id string
-		var hashedPassword string
-		//err := db.QueryRow("select id from username where username='" + signin.Email + "' and password='" + hashedPassword + "'").Scan(&id)
-		err := db.QueryRow("select id,password from username where username='" + signin.Email + "'").Scan(&id,&hashedPassword)
-		
-		err2 := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(signin.Password))
-		
-		if err != nil && err2 !=nil {
+		//err := db.QueryRow("select id,password from username where username='" + signin.Email + "'").Scan(&id,&hashedPassword)
+		get1 := get.NewGetItem()
+		get1.TableName = "users"
+		get1.Key["username"] = &attributevalue.AttributeValue{S: signin.Email}
 
-			r.HTML(200, "login", "Email or password is incorrect.Try again")
+		body, code, err := get1.EndpointReq()
+		fmt.Println("body is %s", body)
+		if len(body) <= 2 || err != nil || code != http.StatusOK {
+			fmt.Printf("get failed %d %v %d \n", code, err, len(body))
+			r.HTML(200, "login", "Username doesot exists in the database")
 		} else {
+			payload := []byte(body)
+			var result map[string]interface{}
+			if err := json.Unmarshal(payload, &result); err != nil {
+				panic(err)
+			}
 
-			setSession(signin.Email, response)
-			r.HTML(200, "user", signin.Email)
+			row := result["Item"].(map[string]interface{})
+			password := row["password"].(map[string]interface{})
+
+			err2 := bcrypt.CompareHashAndPassword([]byte(password["S"].(string)), []byte(signin.Password))
+
+			if err2 != nil {
+
+				r.HTML(200, "login", "Email or password is incorrect.Try again")
+			} else {
+
+				setSession(signin.Email, response)
+				r.HTML(200, "user", signin.Email)
+			}
 		}
 	})
 
@@ -300,16 +330,39 @@ func main() {
 
 	m.Post("/register", binding.Form(Register{}), func(register Register, r render.Render, s sessions.Session) {
 
-       hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(register.Password), 10)
-		_, err := db.Query("insert into username(username,password,date_joined,nickname) values(?,?,?,?)", register.Email,hashedPassword,time.Now().UTC(),register.Nickname)
-		fmt.Println(register.Email, hashedPassword, time.Now().UTC(),register.Nickname)
-		if err != nil {
-			fmt.Println(err)
+		hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(register.Password), 10)
+		// _, err := db.Query("insert into username(username,password,date_joined,nickname) values(?,?,?,?)", register.Email,hashedPassword,time.Now().UTC(),register.Nickname)
+		get1 := get.NewGetItem()
+		get1.TableName = "users"
+		get1.Key["username"] = &attributevalue.AttributeValue{S: register.Email}
+
+		body, code, err := get1.EndpointReq()
+		fmt.Println("body is %s", body)
+		if len(body) > 2 || err != nil || code != http.StatusOK {
+			fmt.Printf("get failed %d %v %d \n", code, err, len(body))
 			r.HTML(200, "register", "Registration failed .Looks Like there is already an account with the same email id")
 		} else {
-			// s.Set("userId", id)
-			r.HTML(200, "login", "Registration Successfull.  You can login now")
+
+			ctime := fmt.Sprintf("%v", time.Now().Unix())
+			put1 := put.NewPutItem()
+			put1.TableName = "users"
+			put1.Item["username"] = &attributevalue.AttributeValue{S: register.Email}
+			put1.Item["password"] = &attributevalue.AttributeValue{S: string(hashedPassword)}
+			put1.Item["displayname"] = &attributevalue.AttributeValue{S: register.Nickname}
+			put1.Item["timestamp"] = &attributevalue.AttributeValue{N: ctime}
+			body1, code1, err1 := put1.EndpointReq()
+
+			if err != nil || code != http.StatusOK {
+				fmt.Printf("put failed %d %v %s\n", code1, err1, body1)
+				r.HTML(200, "register", "Registration failed .Try again")
+
+			} else {
+				r.HTML(200, "login", "Registration Successfull.  You can login now")
+				fmt.Printf("%v\n%v\n,%v\n", body, code, err)
+			}
+
 		}
+
 	})
 
 	m.Get("/logout", func(r render.Render, response http.ResponseWriter) {
@@ -325,8 +378,9 @@ func main() {
 		userName := getUserName(request)
 
 		errs := db.QueryRow("select id from username where username='" + userName + "'").Scan(&iddb)
+
 		if errs == nil {
-			_, err := db.Query("insert into messages(metadata,filetype,user_id,timestamp) values(?,'text',?,?)", msg.Message, iddb,time.Now().UTC())
+			_, err := db.Query("insert into messages(metadata,filetype,user_id,timestamp) values(?,'text',?,?)", msg.Message, iddb, time.Now().UTC())
 			if err != nil {
 				panic(err.Error())
 				// proper error handling instead of panic in your app
@@ -370,7 +424,7 @@ func main() {
 		db.QueryRow("select count(*) from usergroups where user_id='" + iddb + "' and group_id='" + params["id"] + "'").Scan(&count)
 
 		if errs == nil && count == "1" {
-			_, err := db.Query("insert into groupdata(metadata,filetype,user_id,group_id,timestamp) values(?,'text',?,?,?)", msg.Message, iddb, params["id"],time.Now().UTC())
+			_, err := db.Query("insert into groupdata(metadata,filetype,user_id,group_id,timestamp) values(?,'text',?,?,?)", msg.Message, iddb, params["id"], time.Now().UTC())
 			if err != nil {
 				panic(err.Error())
 				// proper error handling instead of panic in your app
@@ -418,7 +472,7 @@ func main() {
 
 		errs := db.QueryRow("select id from username where username='" + userName + "'").Scan(&iddb)
 		if errs == nil {
-			_, err1 := db.Query("insert into groups(group_name,group_admin_id,group_timestamp) values(?,?,?)", msg.Message, iddb,time.Now().UTC())
+			_, err1 := db.Query("insert into groups(group_name,group_admin_id,group_timestamp) values(?,?,?)", msg.Message, iddb, time.Now().UTC())
 
 			if err1 != nil {
 				fmt.Println("err1 error")
@@ -527,11 +581,14 @@ func main() {
 	})
 	m.Post("/uploadfile", uploadHandler)
 	m.Post("/groupuploadfile/:id", groupUploadHandler)
-	m.Get("/getfile", ReturnFile)
+
 	m.Run()
 
 }
 
+func postToUserData() {
+
+}
 func uploadHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, rend render.Render) {
 	file, header, err := r.FormFile("file") // the FormFile function takes in the POST input id file
 	defer file.Close()
@@ -605,26 +662,6 @@ func groupUploadHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, rend
 
 }
 
-func ReturnFile(writer http.ResponseWriter, req *http.Request) {
-
-	name := req.URL.Query()["filename"][0]
-	fmt.Println(name)
-	writer.Header().Set("Content-type", "multipart")
-	writer.Header().Set("Content-Disposition", "attachment;filename="+name)
-	http.ServeFile(writer, req, "/clouduploads/"+name)
-
-}
-
-func getUserName(request *http.Request) (userName string) {
-	if cookie, err := request.Cookie("session"); err == nil {
-		cookieValue := make(map[string]string)
-		if err = cookieHandler.Decode("session", cookie.Value, &cookieValue); err == nil {
-			userName = cookieValue["name"]
-		}
-	}
-	return userName
-}
-
 func setSession(userName string, response http.ResponseWriter) {
 	value := map[string]string{
 		"name": userName,
@@ -647,4 +684,14 @@ func clearSession(response http.ResponseWriter) {
 		MaxAge: -1,
 	}
 	http.SetCookie(response, cookie)
+}
+
+func getUserName(request *http.Request) (userName string) {
+	if cookie, err := request.Cookie("session"); err == nil {
+		cookieValue := make(map[string]string)
+		if err = cookieHandler.Decode("session", cookie.Value, &cookieValue); err == nil {
+			userName = cookieValue["name"]
+		}
+	}
+	return userName
 }
