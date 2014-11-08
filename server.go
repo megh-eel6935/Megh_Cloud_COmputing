@@ -24,7 +24,6 @@ import (
 	"github.com/smugmug/godynamo/types/condition"
 	"io"
 	"net/http"
-	"strconv"
 	"sync"
 	"time"
 )
@@ -46,15 +45,17 @@ type Register struct {
 	Nickname string `form:"nickname"`
 }
 
-type Project struct {
-	Id   int    `json:"id"`
-	Name string `json:"name"`
-}
-
 type Msgs struct {
 	Id       int    `json:"id"`
 	Metadata string `json:"message"`
 	Filetype string `json:"filetype"`
+}
+
+type GroupnamesJson struct {
+	Id          string `json:"group_id"`
+	Group_name  string `json:"group_name"`
+	Group_admin string `json:"group_admin"`
+	Timestamp   string `json:"timestamp"`
 }
 
 type Groupdata struct {
@@ -90,7 +91,7 @@ type Notify struct {
 type Group struct {
 	sync.Mutex
 	name    string
-	clients map[int]*Client
+	clients map[string]*Client
 }
 
 // Client stores all the channels available in the handler in a struct.
@@ -124,21 +125,21 @@ func (c *Notify) getGroup(name string) *Group {
 		}
 	}
 
-	r := &Group{sync.Mutex{}, name, make(map[int]*Client)}
+	r := &Group{sync.Mutex{}, name, make(map[string]*Client)}
 	c.groups = append(c.groups, r)
 
 	return r
 }
 
 // Add a client to a room
-func (r *Group) appendClient(id int, client *Client) {
+func (r *Group) appendClient(username string, client *Client) {
 	r.Lock()
-	_, ok := r.clients[id]
+	_, ok := r.clients[username]
 	if ok {
 		//ctemp.disconnect<-1000
 		fmt.Println("one client disconnected")
 	}
-	r.clients[id] = client
+	r.clients[username] = client
 	fmt.Println("number of clients %v", len(r.clients))
 	r.Unlock()
 }
@@ -161,87 +162,70 @@ func newNotify() *Notify {
 	return &Notify{sync.Mutex{}, make([]*Group, 0)}
 }
 
-func GetMessages(db *sql.DB, id string) []Msgs {
-
-	msgresult, err := db.Query("select id_message,metadata,filetype from messages where user_id=" + id + " order by id_message desc")
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	var (
-		id_message int
-		metadata   string
-		filetype   string
-	)
-
-	p := make([]Msgs, 0)
-	defer msgresult.Close()
-	for msgresult.Next() {
-		err := msgresult.Scan(&id_message, &metadata, &filetype)
-		if err != nil {
-			fmt.Println(err)
-		} else {
-			p = append(p, Msgs{id_message, metadata, filetype})
-		}
-	}
-	return p
+type GroupdataJson struct {
+	Id        string `json:"groupdata_id"`
+	Content   string `json:"content"`
+	Filetype  string `json:"content_type"`
+	Username  string `json:"username"`
+	Timestamp string `json:"timestamp"`
+}
+type UserDataJson struct {
+	Id           string `json:"userdata_id"`
+	Content      string `json:"content"`
+	Content_type string `json:"content_type"`
+	Timestamp    string `json:"timestamp"`
 }
 
-func GetGroups(db *sql.DB, id string) []Groupnames {
-
-	result, err := db.Query("select group_name,group_id from groups where group_id IN(select group_id from usergroups where user_id=" + id + ") order by group_id")
-
-	fmt.Println(" ")
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	var (
-		group_id   int
-		group_name string
-	)
-
-	p := make([]Groupnames, 0)
-	defer result.Close()
-	for result.Next() {
-		err := result.Scan(&group_name, &group_id)
-		if err != nil {
-			fmt.Println(err)
-		} else {
-			p = append(p, Groupnames{group_id, group_name})
-		}
-	}
-	return p
+type strd struct {
+	S string
 }
 
-func GetGroupData(db *sql.DB, id string) []Groupdata {
+type numd struct {
+	N string
+}
 
-	result, err := db.Query("select g.groupdata_id,g.metadata,g.filetype,g.user_id,u.username from groupdata g,username u where g.group_id=" + id + " and u.id=g.user_id order by g.groupdata_id desc")
+type groupitems []struct {
+	Username     strd
+	Group_name   strd
+	Timestamp    numd
+	Group_id     strd
+	Usergroup_id strd
+	Group_admin  strd
+}
 
-	fmt.Println(" ")
-	if err != nil {
-		fmt.Println(err)
-	}
+type groupsList struct {
+	Count        int
+	Items        groupitems
+	ScannedCount int
+}
 
-	var (
-		id_groupdata int
-		metadata     string
-		filetype     string
-		user_id      string
-		username     string
-	)
+type groupdataitems []struct {
+	Username     strd
+	Content_type strd
+	Timestamp    numd
+	Group_id     strd
+	Groupdata_id strd
+	Content      strd
+}
 
-	p := make([]Groupdata, 0)
-	defer result.Close()
-	for result.Next() {
-		err := result.Scan(&id_groupdata, &metadata, &filetype, &user_id, &username)
-		if err != nil {
-			fmt.Println(err)
-		} else {
-			p = append(p, Groupdata{id_groupdata, metadata, filetype, user_id, username})
-		}
-	}
-	return p
+type groupdata struct {
+	Count        int
+	Items        groupdataitems
+	ScannedCount int
+}
+
+type userdataitems []struct {
+	Username     strd
+	Userdata_id  strd
+	Content_type strd
+	Timestamp    numd
+	Content      strd
+}
+
+type userdata struct {
+	Count        int
+	Items        userdataitems
+	ScannedCount int
 }
 
 func main() {
@@ -409,23 +393,18 @@ func main() {
 
 	m.Post("/groupdata/:id", binding.Form(Msg{}), func(msg Msg, params martini.Params, r render.Render, request *http.Request) {
 
-		var iddb string
-		var count string
-		userName := getUserName(request)
-
-		errs := db.QueryRow("select id from username where username='" + userName + "'").Scan(&iddb)
-		db.QueryRow("select count(*) from usergroups where user_id='" + iddb + "' and group_id='" + params["id"] + "'").Scan(&count)
-
-		if errs == nil && count == "1" {
-			_, err := db.Query("insert into groupdata(metadata,filetype,user_id,group_id,timestamp) values(?,'text',?,?,?)", msg.Message, iddb, params["id"], time.Now().UTC())
-			if err != nil {
-				panic(err.Error())
-				// proper error handling instead of panic in your app
+		username := getUserName(request)
+		present := validateUsername(username)
+		if present {
+			r.HTML(200, "user", nil)
+			if insertToGroupData(params["id"], username, msg.Message, "text") {
+				r.JSON(200, map[string]interface{}{"status": "success"})
+			} else {
+				r.JSON(200, map[string]interface{}{"status": "failure"})
 			}
-			r.JSON(200, map[string]interface{}{"status": "Success"})
 		} else {
 
-			panic(errs.Error())
+			r.JSON(200, map[string]interface{}{"Access denied": "Unauthorized request"})
 		}
 
 	})
@@ -443,18 +422,17 @@ func main() {
 	})
 
 	m.Get("/groupslist", func(r render.Render, params martini.Params, request *http.Request) {
-		var iddb string
 
 		userName := getUserName(request)
 
-		getGroupsList(userName)
+		msgs, decide := getGroupsList(userName)
 
-		if userName == "" || iddb == "" {
+		if decide {
 
-			r.JSON(200, map[string]interface{}{"status": "Access denied"})
-		} else {
-			msgs := GetGroups(db, iddb)
 			r.JSON(200, map[string]interface{}{"status": "Success", "data": msgs})
+
+		} else {
+			r.JSON(200, map[string]interface{}{"status": "Access denied"})
 		}
 	})
 
@@ -475,51 +453,31 @@ func main() {
 	})
 
 	m.Get("/getgroupdatabyid/:id", func(r render.Render, params martini.Params, request *http.Request) {
-		var iddb string
-		var count string
-		userName := getUserName(request)
-
-		db.QueryRow("select id from username where username='" + userName + "'").Scan(&iddb)
-		db.QueryRow("select count(*) from usergroups where user_id='" + iddb + "' and group_id='" + params["id"] + "'").Scan(&count)
-
-		if userName == "" || count == "0" {
-
-			r.JSON(200, map[string]interface{}{"status": "Access denied"})
-		} else if count == "1" {
-			msgs := GetGroupData(db, params["id"])
-			r.JSON(200, map[string]interface{}{"status": "Success", "data": msgs})
-		}
-	})
-
-	m.Get("/getmessagesbyid/:id", func(r render.Render, params martini.Params, request *http.Request) {
-		var iddb string
 
 		userName := getUserName(request)
 
-		db.QueryRow("select id from username where username='" + userName + "'").Scan(&iddb)
+		msgs, decide := getGroupDataById(userName, params["id"])
 
-		if userName == "" || iddb != params["id"] {
+		if decide {
 
-			r.JSON(200, map[string]interface{}{"status": "Access denied"})
-		} else if iddb == params["id"] {
-			msgs := GetMessages(db, params["id"])
 			r.JSON(200, map[string]interface{}{"status": "Success", "data": msgs})
+
+		} else {
+			r.JSON(200, map[string]interface{}{"status": "Access denied"})
 		}
 	})
 
 	m.Get("/getmessages", func(r render.Render, params martini.Params, request *http.Request) {
-		var iddb string
-
 		userName := getUserName(request)
 
-		db.QueryRow("select id from username where username='" + userName + "'").Scan(&iddb)
+		msgs, decide := getUserData(userName)
 
-		if userName == "" || iddb == "" {
+		if decide {
 
-			r.JSON(200, map[string]interface{}{"status": "Access denied"})
-		} else {
-			msgs := GetMessages(db, iddb)
 			r.JSON(200, map[string]interface{}{"status": "Success", "data": msgs})
+
+		} else {
+			r.JSON(200, map[string]interface{}{"status": "Access denied"})
 		}
 	})
 
@@ -528,21 +486,17 @@ func main() {
 	m.Get("/sockets/:clientname", sockets.JSON(Message{}), func(params martini.Params, request *http.Request, receiver <-chan *Message, sender chan<- *Message, done <-chan bool, disconnect chan<- int, err <-chan error) (int, string) {
 
 		client := &Client{params["clientname"], receiver, sender, done, err, disconnect}
-		var iddb string
 
 		userName := getUserName(request)
 
-		db.QueryRow("select id from username where username='" + userName + "'").Scan(&iddb)
-
-		groups := GetGroups(db, iddb)
+		groups, _ := getGroupsList(userName)
 
 		fmt.Println("groups length %v", len(groups))
 		for _, group := range groups {
 
-			fmt.Println(group.Id)
-			r := notify.getGroup(strconv.Itoa(group.Id))
-			var id, _ = strconv.Atoi(iddb)
-			r.appendClient(id, client)
+			r := notify.getGroup(group.Id)
+
+			r.appendClient(userName, client)
 		}
 
 		// A single select can be used to do all the messaging
@@ -567,7 +521,85 @@ func main() {
 	m.Run()
 
 }
-func getGroupsList(name string) {
+
+func getUserData(username string) ([]UserDataJson, bool) {
+
+	q := query.NewQuery()
+	q.TableName = "userdata"
+	q.Select = ep.SELECT_ALL
+	kc := condition.NewCondition()
+	kc.AttributeValueList = make([]*attributevalue.AttributeValue, 1)
+	kc.AttributeValueList[0] = &attributevalue.AttributeValue{S: username}
+	kc.ComparisonOperator = query.OP_EQ
+	q.Limit = 10000
+	q.KeyConditions["username"] = kc
+	k, _ := json.Marshal(q)
+
+	fmt.Printf("JSON:%s\n", string(k))
+	body, code, err := q.EndpointReq()
+	if err != nil || code != http.StatusOK {
+		fmt.Printf("query failed %d %v %s\n", code, err, body)
+		return nil, false
+	}
+	fmt.Printf("%v\n%v\n%v\n", body, code, err)
+
+	var res userdata
+	//str2:=body
+	err2 := json.Unmarshal([]byte(body), &res)
+
+	if err2 != nil {
+		fmt.Println(err2)
+	}
+
+	p := make([]UserDataJson, 0)
+	for _, elem := range res.Items {
+
+		fmt.Println(elem.Username.S)
+		p = append(p, UserDataJson{elem.Userdata_id.S, elem.Content.S, elem.Content_type.S, elem.Timestamp.N})
+	}
+	return p, true
+
+}
+
+func getGroupDataById(username string, id string) ([]GroupdataJson, bool) {
+
+	q := query.NewQuery()
+	q.TableName = "groupdata"
+	q.Select = ep.SELECT_ALL
+	kc := condition.NewCondition()
+	kc.AttributeValueList = make([]*attributevalue.AttributeValue, 1)
+	kc.AttributeValueList[0] = &attributevalue.AttributeValue{S: id}
+	kc.ComparisonOperator = query.OP_EQ
+	q.Limit = 10000
+	q.KeyConditions["group_id"] = kc
+	k, _ := json.Marshal(q)
+	fmt.Printf("JSON:%s\n", string(k))
+	body, code, err := q.EndpointReq()
+	if err != nil || code != http.StatusOK {
+		fmt.Printf("query failed %d %v %s\n", code, err, body)
+		return nil, false
+	}
+	fmt.Printf("%v\n%v\n%v\n", body, code, err)
+
+	var res groupdata
+	//str2:=body
+	err2 := json.Unmarshal([]byte(body), &res)
+
+	if err2 != nil {
+		fmt.Println(err2)
+	}
+
+	p := make([]GroupdataJson, 0)
+	for _, elem := range res.Items {
+
+		fmt.Println(elem.Username.S)
+		p = append(p, GroupdataJson{elem.Groupdata_id.S, elem.Content.S, elem.Content_type.S, elem.Username.S, elem.Timestamp.N})
+	}
+	return p, true
+
+}
+
+func getGroupsList(name string) ([]GroupnamesJson, bool) {
 
 	q := query.NewQuery()
 	q.TableName = "usergroups"
@@ -578,14 +610,29 @@ func getGroupsList(name string) {
 	kc.ComparisonOperator = query.OP_EQ
 	q.Limit = 10000
 	q.KeyConditions["username"] = kc
-	json, _ := json.Marshal(q)
-	fmt.Printf("JSON:%s\n", string(json))
+	k, _ := json.Marshal(q)
+	fmt.Printf("JSON:%s\n", string(k))
 	body, code, err := q.EndpointReq()
 	if err != nil || code != http.StatusOK {
 		fmt.Printf("query failed %d %v %s\n", code, err, body)
+		return nil, false
 	}
 	fmt.Printf("%v\n%v\n%v\n", body, code, err)
 
+	var res groupsList
+	//str2:=body
+	err2 := json.Unmarshal([]byte(body), &res)
+
+	if err2 != nil {
+		fmt.Println(err2)
+	}
+	p := make([]GroupnamesJson, 0)
+	for _, elem := range res.Items {
+
+		fmt.Println(elem.Username.S)
+		p = append(p, GroupnamesJson{elem.Group_id.S, elem.Group_name.S, elem.Group_admin.S, elem.Timestamp.N})
+	}
+	return p, true
 }
 func createGroup(username string, groupname string) bool {
 
@@ -610,6 +657,7 @@ func createGroup(username string, groupname string) bool {
 		put2.Item["username"] = &attributevalue.AttributeValue{S: username}
 		put2.Item["group_id"] = &attributevalue.AttributeValue{S: groupid}
 		put2.Item["group_name"] = &attributevalue.AttributeValue{S: groupname}
+		put2.Item["group_admin"] = &attributevalue.AttributeValue{S: username}
 		put2.Item["timestamp"] = &attributevalue.AttributeValue{N: ctime}
 
 		body2, code2, err2 := put2.EndpointReq()
@@ -642,6 +690,29 @@ func insertToUserData(username string, content string, ctype string) bool {
 	put1 := put.NewPutItem()
 	put1.TableName = "userdata"
 	put1.Item["userdata_id"] = &attributevalue.AttributeValue{S: uuid.New()}
+	put1.Item["username"] = &attributevalue.AttributeValue{S: username}
+	put1.Item["content"] = &attributevalue.AttributeValue{S: content}
+	put1.Item["content_type"] = &attributevalue.AttributeValue{S: ctype}
+	put1.Item["timestamp"] = &attributevalue.AttributeValue{N: ctime}
+
+	body, code, err := put1.EndpointReq()
+
+	if err != nil || code != http.StatusOK {
+		fmt.Printf("put failed %d %v %s\n", code, err, body)
+		return false
+	} else {
+		return true
+	}
+
+}
+
+func insertToGroupData(groupid string, username string, content string, ctype string) bool {
+
+	ctime := fmt.Sprintf("%v", time.Now().Unix())
+	put1 := put.NewPutItem()
+	put1.TableName = "groupdata"
+	put1.Item["groupdata_id"] = &attributevalue.AttributeValue{S: uuid.New()}
+	put1.Item["group_id"] = &attributevalue.AttributeValue{S: groupid}
 	put1.Item["username"] = &attributevalue.AttributeValue{S: username}
 	put1.Item["content"] = &attributevalue.AttributeValue{S: content}
 	put1.Item["content_type"] = &attributevalue.AttributeValue{S: ctype}

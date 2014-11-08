@@ -92,14 +92,14 @@
     $.get( "/getmessages", function( data ) {
       sap = JSON.stringify(data);
       var length = data.data.length;
-      console.log(length);
+      console.log("from userdata"+length);
       for(var i=0;i<length;i++)
       {
-        if(data.data[i].filetype=="text"){
-          var temp="<tr><td>"+data.data[i].message+" <td> <td align='right'>message</td></tr>";
+        if(data.data[i].content_type=="text"){
+          var temp="<tr><td>"+data.data[i].content+" <td> <td align='right'>message</td></tr>";
         }
-        else if(data.data[i].filetype=="file") {
-          var temp="<tr><td>"+data.data[i].message+"<td> <td align='right'><a href='https://s3-us-west-2.amazonaws.com/megh-uploads/"+data.data[i].message+"'>download</a></td></tr>";
+        else if(data.data[i].content_type=="file") {
+          var temp="<tr><td>"+data.data[i].content+"<td> <td align='right'><a href='https://s3-us-west-2.amazonaws.com/megh-uploads/"+data.data[i].content+"'>download</a></td></tr>";
         }
         $("#user").append(temp);
       }
@@ -120,15 +120,15 @@
       $.get( url, function( data ) {
         sap = JSON.stringify(data);
         var length = data.data.length;
-        console.log(length);
+        console.log("from getgroupdata "+length);
         $("#group").empty();
         for(var i=0;i<length;i++)
         {
-          if(data.data[i].filetype=="text"){
-           var temp="<tr><td>"+data.data[i].message+" <td> <td align='right'>message</td></tr>";
+          if(data.data[i].content_type=="text"){
+           var temp="<tr><td>"+data.data[i].content+" <td> <td align='right'>message</td></tr>";
          }
-         else if(data.data[i].filetype=="file") {
-          var temp="<tr><td>"+data.data[i].message+"<td> <td align='right'><a href='https://s3-us-west-2.amazonaws.com/megh-uploads/"+data.data[i].message+"'>download</a></td></tr>";
+         else if(data.data[i].content_type=="file") {
+          var temp="<tr><td>"+data.data[i].content+"<td> <td align='right'><a href='https://s3-us-west-2.amazonaws.com/megh-uploads/"+data.data[i].content+"'>download</a></td></tr>";
         }
         $("#group").append(temp);
       }
@@ -144,10 +144,10 @@
       {
         if(i==0)
         {
-          currentgroupid=data.data[i].groupid;
+          currentgroupid=data.data[i].group_id;
           updatelist(currentgroupid);
         }
-        var temp ="<li class=\"list-group-item groupclick\" id="+data.data[i].groupid+" align=\"center\"> <span id=\"badge"+data.data[i].groupid+"\" class=\"badge\"></span> "+data.data[i].groupname+"</li>";
+        var temp ="<li class=\"list-group-item groupclick\" id="+data.data[i].group_id+" align=\"center\"> <span id=\"badge"+data.data[i].group_id+"\" class=\"badge\"></span> "+data.data[i].group_name+"</li>";
       //var temp = "<option value="+data.data[i].groupid+">"+data.data[i].groupname+"</option>";
       $("#addgroups").append(temp);
 
@@ -255,11 +255,11 @@
       $("#group").empty();
       for(var i=0;i<length;i++)
       {
-        if(data.data[i].filetype=="text"){
-         var temp="<tr><td>"+data.data[i].message+" <td> <td align='right'>message</td></tr>";
+        if(data.data[i].content_type=="text"){
+         var temp="<tr><td>"+data.data[i].content+" <td> <td align='right'>message</td></tr>";
        }
-       else if(data.data[i].filetype=="file") {
-        var temp="<tr><td>"+data.data[i].message+"<td> <td align='right'><a href='https://s3-us-west-2.amazonaws.com/megh-uploads/"+data.data[i].message+"'>download</a></td></tr>";
+       else if(data.data[i].content_type=="file") {
+        var temp="<tr><td>"+data.data[i].content+"<td> <td align='right'><a href='https://s3-us-west-2.amazonaws.com/megh-uploads/"+data.data[i].content+"'>download</a></td></tr>";
       }
       $("#group").append(temp);
     }
@@ -276,11 +276,11 @@
       $("#user").empty();
       for(var i=0;i<length;i++)
       {
-        if(data.data[i].filetype=="text"){
-         var temp="<tr><td>"+data.data[i].message+" <td> <td align='right'>message</td></tr>";
+        if(data.data[i].content_type=="text"){
+         var temp="<tr><td>"+data.data[i].content+" <td> <td align='right'>message</td></tr>";
        }
-       else if(data.data[i].filetype=="file") {
-        var temp="<tr><td>"+data.data[i].message+"<td> <td align='right'><a href='https://s3-us-west-2.amazonaws.com/megh-uploads/"+data.data[i].message+"'>download</a></td></tr>";
+       else if(data.data[i].content_type=="file") {
+        var temp="<tr><td>"+data.data[i].content+"<td> <td align='right'><a href='https://s3-us-west-2.amazonaws.com/megh-uploads/"+data.data[i].content+"'>download</a></td></tr>";
       }
       $("#user").append(temp);
     }
