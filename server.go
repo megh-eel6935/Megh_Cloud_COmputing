@@ -421,7 +421,6 @@ func main() {
 		username := getUserName(request)
 		present := validateUsername(username)
 		if present {
-			r.HTML(200, "user", nil)
 			if insertToUserData(username, msg.Message, "url") {
 				r.JSON(200, map[string]interface{}{"status": "success"})
 			} else {
@@ -441,6 +440,24 @@ func main() {
 		if present {
 			r.HTML(200, "user", nil)
 			if insertToGroupData(params["id"], username, msg.Message, "text") {
+				r.JSON(200, map[string]interface{}{"status": "success"})
+			} else {
+				r.JSON(200, map[string]interface{}{"status": "failure"})
+			}
+		} else {
+
+			r.JSON(200, map[string]interface{}{"Access denied": "Unauthorized request"})
+		}
+
+	})
+
+	m.Post("/groupdataurl/:id", binding.Form(Msg{}), func(msg Msg, params martini.Params, r render.Render, request *http.Request) {
+
+		username := getUserName(request)
+		present := validateUsername(username)
+		if present {
+			r.HTML(200, "user", nil)
+			if insertToGroupData(params["id"], username, msg.Message, "url") {
 				r.JSON(200, map[string]interface{}{"status": "success"})
 			} else {
 				r.JSON(200, map[string]interface{}{"status": "failure"})
