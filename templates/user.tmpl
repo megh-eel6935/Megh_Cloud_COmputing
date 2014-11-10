@@ -30,6 +30,7 @@
 		<nav id="nav">
 			<ul>
 				<li><a href="#">Hi  {{.}}</a></li>
+				<li><a id="publickey"> </a></li>
 				<li><a href="/groups">Groups</a></li>
 				<li><a href="" >Help</a></li>
 				<li><a href="/logout" class="button">Logout</a></li>
@@ -58,7 +59,7 @@
 							<div class="12u">
 								<input type="file" id="userfile" style="visibility: hidden;" />	
 								<div id="userdragandrophandler" onclick="document.getElementById('userfile').click(); return false;">
-									Drag & Drop Files Here
+									Click or Drag & Drop Files for file upload
 								</div>
 
 								<div id="status1"></div>
@@ -74,7 +75,6 @@
 									</div>
 									<br>
 									<input type="button" id="userfilesend" value="Send" />	
-									<input type="button" id="filebutton" value="Upload file" />	
 								</form>
 								<div class="12u">
 									<!-- Text -->
@@ -111,9 +111,16 @@
 								</div>	
 									<div class="9u">
 										<section class="box">
+											<div id="adduserbox" hidden>
+											<input type="text" id="addusername" value="" placeholder="Enter username" />
+											<input type="text" id="addpublickey" value="" placeholder="Enter public key" />
+											<input type="button" id="adduser" value="Add User" />
+											</div>
+											<input type="button" id="addusers" value="Add User" />
+
 											<input type="file" id="groupfile" style="visibility: hidden;" />	
 											<div id="groupdragandrophandler" onclick="document.getElementById('groupfile').click(); return false;">
-												Drag & Drop Files Here</div>
+												Click or Drag n Drop Files for file upload</div>
 												<div id="status1"></div>
 												<form id="send-form" method="post" action="">
 													<div class="row uniform half">
@@ -123,7 +130,7 @@
 													</div>
 													<br>
 													<input type="button" id="groupsubmit" value="Send" />
-													<input type="button" id="groupfilebutton" value="Upload file" />	
+														
 												</form>
 												<table class="table">
 													<tbody id="group">

@@ -3,7 +3,6 @@ package main
 import (
 	"code.google.com/p/go-uuid/uuid"
 	"code.google.com/p/go.crypto/bcrypt"
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"github.com/beatrichartz/martini-sockets"
@@ -26,6 +25,8 @@ import (
 	"net/http"
 	"sync"
 	"time"
+	"math/rand"
+	"strconv"
 )
 
 // cookie handling
@@ -37,6 +38,14 @@ var cookieHandler = securecookie.New(
 type Signin struct {
 	Email    string `form:"email"`
 	Password string `form:"password"`
+}
+
+type Pkey struct {
+	
+	Email    string `form:"email"`
+	Publickey string `form:"publickey"`
+	Groupname string `form:"groupname"`
+	Groupid string `form:"groupid"`
 }
 
 type Register struct {
@@ -56,14 +65,6 @@ type GroupnamesJson struct {
 	Group_name  string `json:"group_name"`
 	Group_admin string `json:"group_admin"`
 	Timestamp   string `json:"timestamp"`
-}
-
-type Groupdata struct {
-	Id       int    `json:"id"`
-	Metadata string `json:"message"`
-	Filetype string `json:"filetype"`
-	User_id  string `json:"user_id`
-	Username string `json:"username`
 }
 
 type Groupnames struct {
@@ -110,6 +111,70 @@ type Message struct {
 	From    string `json:"from"`
 	GroupId string `json:"groupid"`
 	Text    string `json:"text"`
+}
+
+type GroupdataJson struct {
+	Id        string `json:"groupdata_id"`
+	Content   string `json:"content"`
+	Filetype  string `json:"content_type"`
+	Username  string `json:"username"`
+	Timestamp string `json:"timestamp"`
+}
+type UserDataJson struct {	
+	Content      string `json:"content"`
+	Content_type string `json:"content_type"`
+	Timestamp    string `json:"timestamp"`
+}
+
+type strd struct {
+	S string
+}
+
+type numd struct {
+	N string
+}
+
+type groupitems []struct {
+	Username     strd
+	Group_name   strd
+	Timestamp    numd
+	Group_id     strd
+	Usergroup_id strd
+	Group_admin  strd
+}
+
+type groupsList struct {
+	Count        int
+	Items        groupitems
+	ScannedCount int
+}
+
+type groupdataitems []struct {
+	Username     strd
+	Content_type strd
+	Timestamp    numd
+	Group_id     strd
+	Groupdata_id strd
+	Content      strd
+}
+
+type groupdata struct {
+	Count        int
+	Items        groupdataitems
+	ScannedCount int
+}
+
+type userdataitems []struct {
+	Username     strd
+	Content_type strd
+	Timestamp    numd
+	Content      strd
+}
+
+type userdata struct {
+	Count        int
+	Items        userdataitems
+	ScannedCount int
 }
 
 // the chat
@@ -162,71 +227,6 @@ func newNotify() *Notify {
 	return &Notify{sync.Mutex{}, make([]*Group, 0)}
 }
 
-type GroupdataJson struct {
-	Id        string `json:"groupdata_id"`
-	Content   string `json:"content"`
-	Filetype  string `json:"content_type"`
-	Username  string `json:"username"`
-	Timestamp string `json:"timestamp"`
-}
-type UserDataJson struct {
-	Id           string `json:"userdata_id"`
-	Content      string `json:"content"`
-	Content_type string `json:"content_type"`
-	Timestamp    string `json:"timestamp"`
-}
-
-type strd struct {
-	S string
-}
-
-type numd struct {
-	N string
-}
-
-type groupitems []struct {
-	Username     strd
-	Group_name   strd
-	Timestamp    numd
-	Group_id     strd
-	Usergroup_id strd
-	Group_admin  strd
-}
-
-type groupsList struct {
-	Count        int
-	Items        groupitems
-	ScannedCount int
-}
-
-type groupdataitems []struct {
-	Username     strd
-	Content_type strd
-	Timestamp    numd
-	Group_id     strd
-	Groupdata_id strd
-	Content      strd
-}
-
-type groupdata struct {
-	Count        int
-	Items        groupdataitems
-	ScannedCount int
-}
-
-type userdataitems []struct {
-	Username     strd
-	Userdata_id  strd
-	Content_type strd
-	Timestamp    numd
-	Content      strd
-}
-
-type userdata struct {
-	Count        int
-	Items        userdataitems
-	ScannedCount int
-}
 
 func main() {
 
@@ -243,14 +243,6 @@ func main() {
 
 	store := sessions.NewCookieStore([]byte("secret123"))
 	m.Use(sessions.Sessions("megh", store))
-
-	db, err := sql.Open("mysql", "root:123456@/userdb")
-
-	if err != nil {
-		panic(err.Error()) // Just for example purpose. You should use proper error handling instead of panic
-	}
-	m.Map(db)
-	defer db.Close()
 
 	m.Get("/", func(r render.Render) {
 
@@ -294,6 +286,8 @@ func main() {
 
 			row := result["Item"].(map[string]interface{})
 			password := row["password"].(map[string]interface{})
+			publickey := row["publickey"].(map[string]interface{})
+			
 
 			err2 := bcrypt.CompareHashAndPassword([]byte(password["S"].(string)), []byte(signin.Password))
 
@@ -301,9 +295,56 @@ func main() {
 
 				r.HTML(200, "login", "Email or password is incorrect.Try again")
 			} else {
-
-				setSession(signin.Email, response)
+				setSession(signin.Email,publickey["S"].(string),response)
 				r.HTML(200, "user", signin.Email)
+			}
+		}
+	})
+
+
+
+	m.Post("/adduser", binding.Form(Pkey{}), func(pkey Pkey, r render.Render, request *http.Request,response http.ResponseWriter, s sessions.Session) {
+		ctime := fmt.Sprintf("%v", time.Now().Unix())
+		username := getUserName(request)
+		get1 := get.NewGetItem()
+		get1.TableName = "users"
+		get1.Key["username"] = &attributevalue.AttributeValue{S: pkey.Email}
+		body, code, err := get1.EndpointReq()
+		fmt.Println("body is %s", body)
+		if len(body) <= 2 || err != nil || code != http.StatusOK {
+			fmt.Printf("get failed %d %v %d \n", code, err, len(body))
+			r.HTML(200, "login", "Username doesot exists in the database")
+		} else {
+			payload := []byte(body)
+			var result map[string]interface{}
+			if err := json.Unmarshal(payload, &result); err != nil {
+				panic(err)
+			}
+
+			row := result["Item"].(map[string]interface{})
+			upublickey := row["publickey"].(map[string]interface{})
+			
+			if pkey.Publickey == upublickey["S"].(string) {
+
+				put2 := put.NewPutItem()
+				put2.TableName = "usergroups"
+				put2.Item["usergroup_id"] = &attributevalue.AttributeValue{S: uuid.New()}
+				put2.Item["username"] = &attributevalue.AttributeValue{S: pkey.Email}
+				put2.Item["group_id"] = &attributevalue.AttributeValue{S: pkey.Groupid}
+				put2.Item["group_name"] = &attributevalue.AttributeValue{S: pkey.Groupname}
+				put2.Item["group_admin"] = &attributevalue.AttributeValue{S: username}
+				put2.Item["timestamp"] = &attributevalue.AttributeValue{N: ctime}
+
+				body2, code2, err2 := put2.EndpointReq()
+				if err2 != nil || code2 != http.StatusOK {
+					fmt.Printf("put failed %d %v %s\n", code2, err2, body2)
+					r.JSON(200, map[string]interface{}{"status": "failure"})
+				}else{
+
+				r.JSON(200, map[string]interface{}{"status": "success"})
+				}
+			} else {
+				r.JSON(200, map[string]interface{}{"status": "failure"})
 			}
 		}
 	})
@@ -334,15 +375,16 @@ func main() {
 			put1.Item["password"] = &attributevalue.AttributeValue{S: string(hashedPassword)}
 			put1.Item["displayname"] = &attributevalue.AttributeValue{S: register.Nickname}
 			put1.Item["timestamp"] = &attributevalue.AttributeValue{N: ctime}
+			put1.Item["publickey"] = &attributevalue.AttributeValue{S: strconv.Itoa(rand.Intn(100000))}
 			body1, code1, err1 := put1.EndpointReq()
 
-			if err != nil || code != http.StatusOK {
+			if err1 != nil || code != http.StatusOK {
 				fmt.Printf("put failed %d %v %s\n", code1, err1, body1)
 				r.HTML(200, "register", "Registration failed .Try again")
 
 			} else {
 				r.HTML(200, "login", "Registration Successfull.  You can login now")
-				fmt.Printf("%v\n%v\n,%v\n", body, code, err)
+				fmt.Printf("%v\n%v\n,%v\n", body1, code1, err1)
 			}
 
 		}
@@ -360,9 +402,10 @@ func main() {
 		username := getUserName(request)
 		present := validateUsername(username)
 		if present {
-			r.HTML(200, "user", nil)
+			
 			if insertToUserData(username, msg.Message, "text") {
 				r.JSON(200, map[string]interface{}{"status": "success"})
+
 			} else {
 				r.JSON(200, map[string]interface{}{"status": "failure"})
 			}
@@ -531,6 +574,10 @@ func getUserData(username string) ([]UserDataJson, bool) {
 	kc.AttributeValueList = make([]*attributevalue.AttributeValue, 1)
 	kc.AttributeValueList[0] = &attributevalue.AttributeValue{S: username}
 	kc.ComparisonOperator = query.OP_EQ
+	var t bool
+    z:=&t
+    *z = false
+	q.ScanIndexForward=z
 	q.Limit = 10000
 	q.KeyConditions["username"] = kc
 	k, _ := json.Marshal(q)
@@ -555,7 +602,7 @@ func getUserData(username string) ([]UserDataJson, bool) {
 	for _, elem := range res.Items {
 
 		fmt.Println(elem.Username.S)
-		p = append(p, UserDataJson{elem.Userdata_id.S, elem.Content.S, elem.Content_type.S, elem.Timestamp.N})
+		p = append(p, UserDataJson{elem.Content.S, elem.Content_type.S, elem.Timestamp.N})
 	}
 	return p, true
 
@@ -570,6 +617,10 @@ func getGroupDataById(username string, id string) ([]GroupdataJson, bool) {
 	kc.AttributeValueList = make([]*attributevalue.AttributeValue, 1)
 	kc.AttributeValueList[0] = &attributevalue.AttributeValue{S: id}
 	kc.ComparisonOperator = query.OP_EQ
+	var t bool
+    z:=&t
+    *z = false
+	q.ScanIndexForward=z
 	q.Limit = 10000
 	q.KeyConditions["group_id"] = kc
 	k, _ := json.Marshal(q)
@@ -686,15 +737,14 @@ func validateUsername(name string) bool {
 
 func insertToUserData(username string, content string, ctype string) bool {
 
-	ctime := fmt.Sprintf("%v", time.Now().Unix())
+	ctime := fmt.Sprintf("%v", time.Now().UnixNano())
 	put1 := put.NewPutItem()
 	put1.TableName = "userdata"
-	put1.Item["userdata_id"] = &attributevalue.AttributeValue{S: uuid.New()}
 	put1.Item["username"] = &attributevalue.AttributeValue{S: username}
+	put1.Item["timestamp"] = &attributevalue.AttributeValue{S: ctime}
 	put1.Item["content"] = &attributevalue.AttributeValue{S: content}
 	put1.Item["content_type"] = &attributevalue.AttributeValue{S: ctype}
-	put1.Item["timestamp"] = &attributevalue.AttributeValue{N: ctime}
-
+	
 	body, code, err := put1.EndpointReq()
 
 	if err != nil || code != http.StatusOK {
@@ -708,15 +758,15 @@ func insertToUserData(username string, content string, ctype string) bool {
 
 func insertToGroupData(groupid string, username string, content string, ctype string) bool {
 
-	ctime := fmt.Sprintf("%v", time.Now().Unix())
+	ctime := fmt.Sprintf("%v", time.Now().UnixNano())
 	put1 := put.NewPutItem()
 	put1.TableName = "groupdata"
-	put1.Item["groupdata_id"] = &attributevalue.AttributeValue{S: uuid.New()}
 	put1.Item["group_id"] = &attributevalue.AttributeValue{S: groupid}
+		put1.Item["timestamp"] = &attributevalue.AttributeValue{S: ctime}
 	put1.Item["username"] = &attributevalue.AttributeValue{S: username}
 	put1.Item["content"] = &attributevalue.AttributeValue{S: content}
 	put1.Item["content_type"] = &attributevalue.AttributeValue{S: ctype}
-	put1.Item["timestamp"] = &attributevalue.AttributeValue{N: ctime}
+
 
 	body, code, err := put1.EndpointReq()
 
@@ -729,7 +779,7 @@ func insertToGroupData(groupid string, username string, content string, ctype st
 
 }
 
-func uploadHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, rend render.Render) {
+func uploadHandler(w http.ResponseWriter, r *http.Request,rend render.Render) {
 	file, header, err := r.FormFile("file") // the FormFile function takes in the POST input id file
 	defer file.Close()
 
@@ -746,25 +796,25 @@ func uploadHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, rend rend
 	}
 	// write the content from POST to the file
 
-	var iddb string
 
 	userName := getUserName(r)
 
-	errs := db.QueryRow("select id from username where username='" + userName + "'").Scan(&iddb)
-	if errs == nil {
-		_, err := db.Query("insert into messages(metadata,filetype,user_id) values(?,'file',?)", header.Filename, iddb)
-		if err != nil {
-			panic(err.Error())
-			// proper error handling instead of panic in your app
-		}
-		rend.HTML(200, "elements", nil)
-	} else {
+		present := validateUsername(userName)
+		if present {
+			if insertToUserData(userName, header.Filename, "file") {
+				rend.JSON(200, map[string]interface{}{"status": "success"})
+			} else {
+				rend.JSON(200, map[string]interface{}{"status": "failure"})
+			}
+		} else {
 
-		panic(errs.Error())
-	}
+			rend.JSON(200, map[string]interface{}{"Access denied": "Unauthorized request"})
+		}
+
 
 }
-func groupUploadHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, rend render.Render, params martini.Params) {
+
+func groupUploadHandler(w http.ResponseWriter, r *http.Request, rend render.Render, params martini.Params) {
 	file, header, err := r.FormFile("file") // the FormFile function takes in the POST input id file
 	defer file.Close()
 
@@ -780,29 +830,23 @@ func groupUploadHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, rend
 		fmt.Fprintln(w, err)
 	}
 
-	var iddb string
-	var count string
 	userName := getUserName(r)
 
-	errs := db.QueryRow("select id from username where username='" + userName + "'").Scan(&iddb)
-	db.QueryRow("select count(*) from usergroups where user_id='" + iddb + "' and group_id='" + params["id"] + "'").Scan(&count)
+		present := validateUsername(userName)
+		if present {
+			if insertToGroupData(params["id"], userName, header.Filename, "file") {
+				rend.JSON(200, map[string]interface{}{"status": "success"})
+			} else {
+				rend.JSON(200, map[string]interface{}{"status": "failure"})
+			}
+		} else {
 
-	if errs == nil && count == "1" {
-		_, err := db.Query("insert into groupdata(metadata,filetype,user_id,group_id) values(?,'file',?,?)", header.Filename, iddb, params["id"])
-
-		if err != nil {
-			panic(err.Error())
-			// proper error handling instead of panic in your app
+			rend.JSON(200, map[string]interface{}{"Access denied": "Unauthorized request"})
 		}
-		rend.HTML(200, "groups", userName)
-	} else {
-
-		panic(errs.Error())
-	}
 
 }
 
-func setSession(userName string, response http.ResponseWriter) {
+func setSession(userName string, publickey string ,response http.ResponseWriter) {
 	value := map[string]string{
 		"name": userName,
 	}
@@ -812,7 +856,13 @@ func setSession(userName string, response http.ResponseWriter) {
 			Value: encoded,
 			Path:  "/",
 		}
+		cookie2 := &http.Cookie{
+			Name:  "publickey",
+			Value: publickey,
+			Path:  "/",
+		}
 		http.SetCookie(response, cookie)
+		http.SetCookie(response, cookie2)
 	}
 }
 
