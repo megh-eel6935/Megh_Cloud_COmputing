@@ -1,6 +1,5 @@
   var currentgroupid = "usertime";
   var currentgroupname = 0;
-
   var urlRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
   var ChatRoom = function() {
       var c = this;
@@ -97,16 +96,13 @@
           console.log("from userdata" + length);
           for (var i = 0; i < length; i++) {
               if (data.data[i].content_type == "text") {
-                  //var temp = "<tr><td>" + linkify(data.data[i].content) + " <td> <td align='right'>message</td></tr>";
-                  var timeline = "<li><div class=\"timeline-badge warning\"><i class=\"glyphicon glyphicon-envelope\"></i></div><div class=\"timeline-panel\">" + "<div class=\"timeline-heading\"><h4 class=\"timeline-title\">" + linkify(data.data[i].content) + "</h4><p><small class=\"text-muted\">" + "<i class=\"glyphicon glyphicon-time\"></i>" + timeConverter(data.data[i].timestamp) + "</small></p></div><div class=\"timeline-body\">" + "<p> shared from your android device</p></div></div></li>"
+                  var timeline = "<li id=\"li" + data.data[i].timestamp + "\"><div class=\"timeline-badge warning\"><i class=\"glyphicon glyphicon-envelope\"></i></div><div class=\"timeline-panel\">  <div id=" + data.data[i].timestamp + " class=\"close\">&times;</div>" + "<div class=\"timeline-heading\"><h4 class=\"timeline-title\">" + linkify(data.data[i].content) + "</h4><p><small class=\"text-muted\">" + "<i class=\"glyphicon glyphicon-time\"></i>" + timeConverter(data.data[i].timestamp) + "</small></p></div><div class=\"timeline-body\">" + "<p> shared from your android device</p></div></div></li>";
 
               } else if (data.data[i].content_type == "url") {
-                  // var temp = "<tr><td>" + linkify(data.data[i].content) + " <td> <td align='right'>url</td></tr>";
-                  var timeline = "<li><div class=\"timeline-badge info\"><i class=\"glyphicon glyphicon-link\"></i></div><div class=\"timeline-panel\">" + "<div class=\"timeline-heading\"><h4 class=\"timeline-title\">" + linkify(data.data[i].content) + "</h4><p><small class=\"text-muted\">" + "<i class=\"glyphicon glyphicon-time\"></i>" + timeConverter(data.data[i].timestamp) + "</small></p></div><div class=\"timeline-body\">" + "<p>shared from chrome</p></div></div></li>"
+                  var timeline = "<li id=\"li" + data.data[i].timestamp + "\"><div class=\"timeline-badge info\"><i class=\"glyphicon glyphicon-link\"></i></div><div class=\"timeline-panel\">   <div id=" + data.data[i].timestamp + " class=\"close\">&times;</div>" + "<div class=\"timeline-heading\"><h4 class=\"timeline-title\">" + linkify(data.data[i].content) + "</h4><p><small class=\"text-muted\">" + "<i class=\"glyphicon glyphicon-time\"></i>" + timeConverter(data.data[i].timestamp) + "</small></p></div><div class=\"timeline-body\">" + "<p>shared from chrome</p></div></div></li>";
               } else if (data.data[i].content_type == "file") {
 
-                  //var temp = "<tr><td>" + data.data[i].content + "<td> <td align='right'><a href='https://s3-us-west-2.amazonaws.com/megh-uploads/" + data.data[i].content + "'>download</a></td></tr>";
-                  var timeline = "<li><div class=\"timeline-badge danger\"><i class=\"glyphicon glyphicon-file\"></i></div><div class=\"timeline-panel\">" + "<div class=\"timeline-heading\"><h4 class=\"timeline-title\"><a href='https://s3-us-west-2.amazonaws.com/megh-uploads/" + data.data[i].content + "' class=\"glyphicon glyphicon-download-alt\">  </a> " + data.data[i].content + "</h4><p><small class=\"text-muted\">" + "<i class=\"glyphicon glyphicon-time\"></i>" + timeConverter(data.data[i].timestamp) + "</small></p></div><div class=\"timeline-body\">" + "<p>shared from browser</p></div></div></li>"
+                  var timeline = "<li id=\"li" + data.data[i].timestamp + "\"><div class=\"timeline-badge danger\"><i class=\"glyphicon glyphicon-file\"></i></div><div class=\"timeline-panel\">   <div id=" + data.data[i].timestamp + " class=\"close\">&times;</div>" + "<div class=\"tim<sdiv\"timeline-title\"><a href='https://s3-us-west-2.amazonaws.com/megh-uploads/" + data.data[i].content + "' class=\"glyphicon glyphicon-download-alt\">  </a> " + data.data[i].content + "</h4><p><small class=\"text-muted\">" + "<i class=\"glyphicon glyphicon-time\"></i>" + timeConverter(data.data[i].timestamp) + "</small></p></div><div class=\"timeline-body\">" + "<p>shared from browser</p></div></div></li>"
 
               }
               $("#usertimeline").append(timeline);
@@ -148,15 +144,15 @@
               for (var i = 0; i < length; i++) {
                   if (data.data[i].content_type == "text") {
                       //var temp = "<tr><td>" + linkify(data.data[i].content) + " <td> <td align='right'>message</td></tr>";
-                      var timeline = "<li><div class=\"timeline-badge warning\"><i class=\"glyphicon glyphicon-envelope\"></i></div><div class=\"timeline-panel\">" + "<div class=\"timeline-heading\"><h4 class=\"timeline-title\">" + linkify(data.data[i].content) + "</h4><p><small class=\"text-muted\">" + "<i class=\"glyphicon glyphicon-time\"></i>" + timeConverter(data.data[i].timestamp) + "</small></p></div><div class=\"timeline-body\">" + "<p> shared from your android device</p></div></div></li>"
+                      var timeline = "<li id=\"li" + data.data[i].timestamp + "\"><div class=\"timeline-badge warning\"><i class=\"glyphicon glyphicon-envelope\"></i></div><div class=\"timeline-panel\">  <div id=" + data.data[i].timestamp + " class=\"close\">&times;</div>" + "<div class=\"timeline-heading\"><h4 class=\"timeline-title\">" + linkify(data.data[i].content) + "</h4><p><small class=\"text-muted\">" + "<i class=\"glyphicon glyphicon-time\"></i>" + timeConverter(data.data[i].timestamp) + "</small></p></div><div class=\"timeline-body\">" + "<p> shared from your android device</p></div></div></li>"
 
                   } else if (data.data[i].content_type == "url") {
                       // var temp = "<tr><td>" + linkify(data.data[i].content) + " <td> <td align='right'>url</td></tr>";
-                      var timeline = "<li><div class=\"timeline-badge info\"><i class=\"glyphicon glyphicon-link\"></i></div><div class=\"timeline-panel\">" + "<div class=\"timeline-heading\"><h4 class=\"timeline-title\">" + linkify(data.data[i].content) + "</h4><p><small class=\"text-muted\">" + "<i class=\"glyphicon glyphicon-time\"></i>" + timeConverter(data.data[i].timestamp) + "</small></p></div><div class=\"timeline-body\">" + "<p>shared from chrome</p></div></div></li>"
+                      var timeline = "<li id=\"li" + data.data[i].timestamp + "\"><div class=\"timeline-badge info\"><i class=\"glyphicon glyphicon-link\"></i></div><div class=\"timeline-panel\"> <div id=" + data.data[i].timestamp + " class=\"close\">&times;</div>" + "<div class=\"timeline-heading\"><h4 class=\"timeline-title\">" + linkify(data.data[i].content) + "</h4><p><small class=\"text-muted\">" + "<i class=\"glyphicon glyphicon-time\"></i>" + timeConverter(data.data[i].timestamp) + "</small></p></div><div class=\"timeline-body\">" + "<p>shared from chrome</p></div></div></li>"
                   } else if (data.data[i].content_type == "file") {
 
                       //var temp = "<tr><td>" + data.data[i].content + "<td> <td align='right'><a href='https://s3-us-west-2.amazonaws.com/megh-uploads/" + data.data[i].content + "'>download</a></td></tr>";
-                      var timeline = "<li><div class=\"timeline-badge danger\"><i class=\"glyphicon glyphicon-file\"></i></div><div class=\"timeline-panel\">" + "<div class=\"timeline-heading\"><h4 class=\"timeline-title\"><a href='https://s3-us-west-2.amazonaws.com/megh-uploads/" + data.data[i].content + "' class=\"glyphicon glyphicon-download-alt\">  </a> " + data.data[i].content + "</h4><p><small class=\"text-muted\">" + "<i class=\"glyphicon glyphicon-time\"></i>" + timeConverter(data.data[i].timestamp) + "</small></p></div><div class=\"timeline-body\">" + "<p>shared from browser</p></div></div></li>"
+                      var timeline = "<li id=\"li" + data.data[i].timestamp + "\"><div class=\"timeline-badge danger\"><i class=\"glyphicon glyphicon-file\"></i></div><div class=\"timeline-panel\">   <div id=" + data.data[i].timestamp + " class=\"close\">&times;</div>" + "<div class=\"timeline-heading\"><h4 class=\"timeline-title\"><a href='https://s3-us-west-2.amazonaws.com/megh-uploads/" + data.data[i].content + "' class=\"glyphicon glyphicon-download-alt\">  </a> " + data.data[i].content + "</h4><p><small class=\"text-muted\">" + "<i class=\"glyphicon glyphicon-time\"></i>" + timeConverter(data.data[i].timestamp) + "</small></p></div><div class=\"timeline-body\">" + "<p>shared from browser</p></div></div></li>"
 
                   }
                   $("#usertimeline").append(timeline);
@@ -168,7 +164,7 @@
                   sap = JSON.stringify(data);
                   var length = data.data.length;
                   if (length != 0) {
-                      $("#userslist").append("<h4>Group Members</h4>");
+                      $("#userslist").append("<h4>Group Members<i onclick=\"$('#adduserform').toggle();\" class=\"glyphicon glyphicon-plus pull-right\"></i></h4>");
                   }
 
                   for (var i = 0; i < length; i++) {
@@ -176,7 +172,7 @@
                           var timeline = "<div class=\"desc\"><div class=\"details\"><p><a href=\"#\">" + data.data[i].username + "</a><br/><muted>Admin</muted></p></div></div>";
 
                       } else {
-                          var timeline = "<div class=\"desc\"><div class=\"details\"><p><a href=\"#\">" + data.data[i].username + "</a><br/><muted></muted></p></div></div>";
+                          var timeline = "<div class=\"desc\"><div class=\"details\"><div class=\"close\">&times;</div><p><a href=\"#\">" + data.data[i].username + "</a><br/><muted></muted></p></div></div>";
                       }
 
 
@@ -189,7 +185,46 @@
 
 
       });
+      $(document).on('click', '.close', function() {
 
+          if (confirm('Are  You Sure you Want to delete tis item')) {
+    
+          var id = this.id;
+          if (currentgroupid == "usertime") {
+              var url = '/deleteuserdata/' + id;
+              $.get(url, function(data) {
+                  console.log(data.status);
+                  if (data.status == "Success") {
+                      console.log(data.status);
+                      $('#li' + id).fadeOut(500, function() {
+                          $('#li' + id).remove();
+                      });
+                  }
+
+
+              });
+
+          } else {
+
+              var url = '/deletegroupdata/' + currentgroupid + '/' + id;
+              $.get(url, function(data) {
+                  console.log(data.status);
+                  if (data.status == "Success") {
+
+                      $('#li' + id).fadeOut(500, function() {
+                          $('#li' + id).remove();
+                      });
+                  }
+
+
+              });
+
+          }
+
+        } else {
+}
+
+      });
       $.get("/groupslist", function(data) {
           sap = JSON.stringify(data);
           var length = data.data.length;
@@ -197,7 +232,7 @@
           for (var i = 0; i < length; i++) {
 
 
-              var temp = " <a  id=" + data.data[i].group_id + " class=\"list-group-item\" ><span id=\"badge" + data.data[i].group_id + "\" class=\"badge\"></span>" + data.data[i].group_name + "</a>";
+              var temp = " <a  id=" + data.data[i].group_id + " class=\"list-group-item\" ><span id=\"badge" + data.data[i].group_id + "\" class=\"badge\"></span>" + data.data[i].group_name + "<div class=\"close\">&times;</div></a>";
               $("#groupslist").append(temp);
 
 
@@ -223,10 +258,6 @@
       });
 
 
-      $("#addusers").click(function() {
-          $("#addusers").toggle();
-          $("#adduserbox").toggle();
-      });
 
       $("#adduser").click(function() {
           var addusername = $("#addusername").val();
@@ -239,10 +270,10 @@
               groupname: currentgroupname,
               groupid: currentgroupid
           }, function(data, status) {
-              //location.reload();
-              console.log(status);
-              $("#addusers").toggle();
-              $("#adduserbox").toggle();
+
+              $('#addusername').text = "";
+              $('#addpublickey').text = "";
+              $('#adduserform').toggle();
 
           });
 
@@ -252,21 +283,23 @@
       $("#userfilesend").click(function() {
           var value = $("#text-input").val();
           var id = currentgroupid;
+
+          console.log(currentgroupid);
           if (checkurl(value)) {
-              if (id == 0) {
+              if (id == "usertime") {
                   var url = "/urls";
               } else {
                   var url = "/groupdataurl/" + id;
               }
           } else {
-              if (currentgroupid == 0) {
+              if (id == "usertime") {
                   var url = "/messages";
               } else {
                   var url = "/groupdata/" + id;
               }
 
           }
-
+          console.log("url is " + url);
           $.post(url, {
               message: value
           }, function(data, status) {
@@ -280,7 +313,7 @@
 
       $("#userfile").change(function() {
           var id = currentgroupid;
-          if (currentgroupid == 0) {
+          if (id == "usertime") {
               var url = "/uploadfile";
           } else {
               var url = "/groupuploadfile/" + id;
@@ -309,7 +342,7 @@
 
   function updatelist(id) {
 
-      if (id == 0) {
+      if (id == "usertime") {
           var url = "/getmessages";
       } else {
           var url = "/getgroupdatabyid/" + id;
@@ -321,16 +354,13 @@
           $("#usertimeline").empty();
           for (var i = 0; i < length; i++) {
               if (data.data[i].content_type == "text") {
-                  //var temp = "<tr><td>" + linkify(data.data[i].content) + " <td> <td align='right'>message</td></tr>";
-                  var timeline = "<li><div class=\"timeline-badge warning\"><i class=\"glyphicon glyphicon-envelope\"></i></div><div class=\"timeline-panel\">" + "<div class=\"timeline-heading\"><h4 class=\"timeline-title\">" + linkify(data.data[i].content) + "</h4><p><small class=\"text-muted\">" + "<i class=\"glyphicon glyphicon-time\"></i>" + timeConverter(data.data[i].timestamp) + "</small></p></div><div class=\"timeline-body\">" + "<p> shared from your android device</p></div></div></li>"
+                  var timeline = "<li id=\"li" + data.data[i].timestamp + "\"><div class=\"timeline-badge warning\"><i class=\"glyphicon glyphicon-envelope\"></i></div><div class=\"timeline-panel\">  <div id=" + data.data[i].timestamp + " class=\"close\">&times;</div>" + "<div class=\"timeline-heading\"><h4 class=\"timeline-title\">" + linkify(data.data[i].content) + "</h4><p><small class=\"text-muted\">" + "<i class=\"glyphicon glyphicon-time\"></i>" + timeConverter(data.data[i].timestamp) + "</small></p></div><div class=\"timeline-body\">" + "<p> shared from your android device</p></div></div></li>";
 
               } else if (data.data[i].content_type == "url") {
-                  // var temp = "<tr><td>" + linkify(data.data[i].content) + " <td> <td align='right'>url</td></tr>";
-                  var timeline = "<li><div class=\"timeline-badge info\"><i class=\"glyphicon glyphicon-link\"></i></div><div class=\"timeline-panel\">" + "<div class=\"timeline-heading\"><h4 class=\"timeline-title\">" + linkify(data.data[i].content) + "</h4><p><small class=\"text-muted\">" + "<i class=\"glyphicon glyphicon-time\"></i>" + timeConverter(data.data[i].timestamp) + "</small></p></div><div class=\"timeline-body\">" + "<p>shared from chrome</p></div></div></li>"
+                  var timeline = "<li id=\"li" + data.data[i].timestamp + "\"><div class=\"timeline-badge info\"><i class=\"glyphicon glyphicon-link\"></i></div><div class=\"timeline-panel\">   <div id=" + data.data[i].timestamp + " class=\"close\">&times;</div>" + "<div class=\"timeline-heading\"><h4 class=\"timeline-title\">" + linkify(data.data[i].content) + "</h4><p><small class=\"text-muted\">" + "<i class=\"glyphicon glyphicon-time\"></i>" + timeConverter(data.data[i].timestamp) + "</small></p></div><div class=\"timeline-body\">" + "<p>shared from chrome</p></div></div></li>";
               } else if (data.data[i].content_type == "file") {
 
-                  //var temp = "<tr><td>" + data.data[i].content + "<td> <td align='right'><a href='https://s3-us-west-2.amazonaws.com/megh-uploads/" + data.data[i].content + "'>download</a></td></tr>";
-                  var timeline = "<li><div class=\"timeline-badge danger\"><i class=\"glyphicon glyphicon-file\"></i></div><div class=\"timeline-panel\">" + "<div class=\"timeline-heading\"><h4 class=\"timeline-title\"><a href='https://s3-us-west-2.amazonaws.com/megh-uploads/" + data.data[i].content + "' class=\"glyphicon glyphicon-download-alt\">  </a> " + data.data[i].content + "</h4><p><small class=\"text-muted\">" + "<i class=\"glyphicon glyphicon-time\"></i>" + timeConverter(data.data[i].timestamp) + "</small></p></div><div class=\"timeline-body\">" + "<p>shared from browser</p></div></div></li>"
+                  var timeline = "<li id=\"li" + data.data[i].timestamp + "\"><div class=\"timeline-badge danger\"><i class=\"glyphicon glyphicon-file\"></i></div><div class=\"timeline-panel\">   <div id=" + data.data[i].timestamp + " class=\"close\">&times;</div>" + "<div class=\"tim<sdiv\"timeline-title\"><a href='https://s3-us-west-2.amazonaws.com/megh-uploads/" + data.data[i].content + "' class=\"glyphicon glyphicon-download-alt\">  </a> " + data.data[i].content + "</h4><p><small class=\"text-muted\">" + "<i class=\"glyphicon glyphicon-time\"></i>" + timeConverter(data.data[i].timestamp) + "</small></p></div><div class=\"timeline-body\">" + "<p>shared from browser</p></div></div></li>"
 
               }
               $("#usertimeline").append(timeline);
@@ -339,19 +369,6 @@
       });
   }
 
-
-  function updategrouplist() {
-      $.get("/groupslist", function(data) {
-          sap = JSON.stringify(data);
-          var length = data.data.length;
-          $("#groupslist").empty();
-          for (var i = 0; i < length; i++) {
-              var temp = " <a  id=" + data.data[i].group_id + " class=\"list-group-item\" ><span id=\"badge" + data.data[i].group_id + "\" class=\"badge\"></span>" + data.data[i].group_name + "</a>";
-              $("#groupslist").append(temp);
-          }
-
-      });
-  }
 
   function sendFileToServer(formData, status, url, ug) {
       var uploadURL = url; //Upload URL
@@ -503,9 +520,6 @@
   }
 
   function checkurl(text) {
-      //console.log(text.match(/(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig));
-      //console.log(text);
-      //if(text.match(/(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig||[])!=null){
       var temp = text;
       var temp2 = text;
       var match = (text.match(/(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig) || []).length;

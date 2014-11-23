@@ -16,6 +16,7 @@ import (
 	"github.com/smugmug/godynamo/conf"
 	"github.com/smugmug/godynamo/conf_file"
 	ep "github.com/smugmug/godynamo/endpoint"
+	delete_item "github.com/smugmug/godynamo/endpoints/delete_item"
 	get "github.com/smugmug/godynamo/endpoints/get_item"
 	put "github.com/smugmug/godynamo/endpoints/put_item"
 	query "github.com/smugmug/godynamo/endpoints/query"
@@ -174,6 +175,18 @@ type groupdataitems []struct {
 	Group_id     strd
 	Groupdata_id strd
 	Content      strd
+}
+type groupdatasingleitem struct {
+	Username     strd
+	Content_type strd
+	Timestamp    strd
+	Group_id     strd
+	Groupdata_id strd
+	Content      strd
+}
+
+type groupdataitem struct {
+	Item groupdatasingleitem
 }
 
 type groupdata struct {
@@ -512,7 +525,43 @@ func main() {
 		}
 
 	})
+	m.Get("/deleteuserdata/:timestamp", func(params martini.Params, r render.Render, request *http.Request) {
 
+		userName := getUserName(request)
+		present := validateUsername(userName)
+		if present {
+			decide := deleteuserdata(userName, params["timestamp"])
+
+			if decide {
+				r.JSON(200, map[string]interface{}{"status": "Success"})
+			} else {
+				r.JSON(200, map[string]interface{}{"status": "Access denied"})
+			}
+		} else {
+			r.JSON(200, map[string]interface{}{"status": "Access denied"})
+		}
+
+	})
+	m.Get("/deletegroupdata/:groupid/:timestamp", func(params martini.Params, r render.Render, request *http.Request) {
+
+		userName := getUserName(request)
+		present := validateUsername(userName)
+
+		if present {
+			decide := deletegroupdata(userName, params["timestamp"], params["groupid"])
+
+			if decide == 0 {
+				r.JSON(200, map[string]interface{}{"status": "Not able to Delete .Server error"})
+			} else if decide == 1 {
+				r.JSON(200, map[string]interface{}{"status": "Success"})
+			} else if decide == 2 {
+				r.JSON(200, map[string]interface{}{"status": "Not Authorized to delete"})
+			}
+		} else {
+			r.JSON(200, map[string]interface{}{"status": "Access denied"})
+		}
+
+	})
 	m.Get("/groups", func(r render.Render, request *http.Request) {
 
 		userName := getUserName(request)
@@ -625,6 +674,64 @@ func main() {
 
 }
 
+func deleteuserdata(username string, timestamp string) bool {
+
+	// DELETE AN ITEM
+	del_item1 := delete_item.NewDeleteItem()
+	del_item1.TableName = "userdata"
+	del_item1.Key["username"] = &attributevalue.AttributeValue{S: username}
+	del_item1.Key["timestamp"] = &attributevalue.AttributeValue{S: timestamp}
+
+	body, code, err := del_item1.EndpointReq()
+	if err != nil || code != http.StatusOK {
+		fmt.Printf("fail delete %d %v %s\n", code, err, body)
+
+		return false
+	}
+
+	return true
+
+}
+func deletegroupdata(username string, timestamp string, groupid string) int {
+
+	get1 := get.NewGetItem()
+	get1.TableName = "groupdata"
+	get1.Key["group_id"] = &attributevalue.AttributeValue{S: groupid}
+	get1.Key["timestamp"] = &attributevalue.AttributeValue{S: timestamp}
+	body, code, err := get1.EndpointReq()
+
+	if err != nil || code != http.StatusOK {
+		return 0
+	} else {
+		var res groupdataitem
+		err3 := json.Unmarshal([]byte(body), &res)
+
+		if err3 != nil {
+			return 0
+		}
+
+		if res.Item.Username.S == username {
+			// DELETE AN ITEM
+			del_item1 := delete_item.NewDeleteItem()
+			del_item1.TableName = "groupdata"
+			del_item1.Key["group_id"] = &attributevalue.AttributeValue{S: groupid}
+			del_item1.Key["timestamp"] = &attributevalue.AttributeValue{S: timestamp}
+			body1, code1, err1 := del_item1.EndpointReq()
+
+			if err1 != nil || code1 != http.StatusOK {
+				fmt.Printf("fail delete %d %v %s\n", code1, err1, body1)
+
+				return 0
+			} else {
+				return 1
+			}
+
+		} else {
+			return 2
+		}
+	}
+	return 0
+}
 func getUserData(username string) ([]UserDataJson, bool) {
 
 	q := query.NewQuery()
