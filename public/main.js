@@ -172,7 +172,7 @@
                           var timeline = "<div class=\"desc\"><div class=\"details\"><p><a href=\"#\">" + data.data[i].username + "</a><br/><muted>Admin</muted></p></div></div>";
 
                       } else {
-                          var timeline = "<div class=\"desc\"><div class=\"details\"><div class=\"close\">&times;</div><p><a href=\"#\">" + data.data[i].username + "</a><br/><muted></muted></p></div></div>";
+                          var timeline = "<div id=\"delete" + data.data[i].username + "\" class=\"desc\"><div class=\"details\"><div id=\"" + data.data[i].username + "\" class=\"closeuser\">&times;</div><p><a href=\"#\">" + data.data[i].username + "</a><br/><muted></muted></p></div></div>";
                       }
 
 
@@ -188,51 +188,121 @@
       $(document).on('click', '.close', function() {
 
           if (confirm('Are  You Sure you Want to delete tis item')) {
-    
-          var id = this.id;
-          if (currentgroupid == "usertime") {
-              var url = '/deleteuserdata/' + id;
+              var id = this.id;
+              if (currentgroupid == "usertime") {
+                  var url = '/deleteuserdata/' + id;
+                  $.get(url, function(data) {
+                      console.log(data.status);
+                      if (data.status == "Success") {
+                          console.log(data.status);
+                          $('#li' + id).fadeOut(500, function() {
+                              $('#li' + id).remove();
+                          });
+                      }
+                  });
+              } else {
+                  var url = '/deletegroupdata/' + currentgroupid + '/' + id;
+                  $.get(url, function(data) {
+                      console.log(data.status);
+                      if (data.status == "Success") {
+
+                          $('#li' + id).fadeOut(500, function() {
+                              $('#li' + id).remove();
+                          });
+                      }
+                  });
+              }
+          } else {}
+
+      });
+
+      $(document).on('click', '.closeuser', function() {
+
+          if (confirm('Are  You Sure you Want to delete tis item')) {
+              var id = this.id;
+              var url = '/deleteuserfromgroup/' + currentgroupid + '/' + id;
               $.get(url, function(data) {
                   console.log(data.status);
                   if (data.status == "Success") {
                       console.log(data.status);
-                      $('#li' + id).fadeOut(500, function() {
-                          $('#li' + id).remove();
+                      var newid = id.replace(/[-[\]{}()*+?@.,\\^$|#\s]/g, "\\$&");
+                      console.log("new id " + newid);
+                      $('#delete' + newid).fadeOut(500, function() {
+                          $('#delete' + newid).remove();
                       });
                   }
-
-
               });
+          } else {}
 
-          } else {
+      });
 
-              var url = '/deletegroupdata/' + currentgroupid + '/' + id;
+      $(document).on('click', '.closegroup', function() {
+
+          if (confirm('Are  You Sure you Want to delete tis item')) {
+              var id = this.id;
+              var url = '/deleteuserfromgroup/' + currentgroupid + '/' + id;
               $.get(url, function(data) {
                   console.log(data.status);
                   if (data.status == "Success") {
-
-                      $('#li' + id).fadeOut(500, function() {
-                          $('#li' + id).remove();
+                      console.log(data.status);
+                      var newid = id.replace(/[-[\]{}()*+?@.,\\^$|#\s]/g, "\\$&");
+                      console.log("new id " + newid);
+                      $('#delete' + newid).fadeOut(500, function() {
+                          $('#delete' + newid).remove();
                       });
                   }
-
-
               });
-
-          }
-
-        } else {
-}
+          } else {}
 
       });
+
+      $(document).on('click', '.closegroupadmin', function() {
+
+          if (confirm('Clicking on yes will delete all the group data')) {
+              var id = this.id;
+              var url = '/deletegroup/' + currentgroupid;
+              $.get(url, function(data) {
+                  console.log(data.status);
+                  if (data.status == "Success") {
+                      console.log(data.status);
+                      updategrouplist(false);
+                  }
+              });
+          } else {}
+
+      });
+
+      $(document).on('click', '.closegroupuser', function() {
+
+          if (confirm('Clicking on yes will remove you from the group')) {
+              var id = this.id;
+              var url = '/deleteuserfromgroup/' + currentgroupid + '/' + id;
+              $.get(url, function(data) {
+                  console.log(data.status);
+                  if (data.status == "Success") {
+                      updategrouplist(false);
+                  }
+              });
+          } else {}
+
+      });
+
+
       $.get("/groupslist", function(data) {
           sap = JSON.stringify(data);
           var length = data.data.length;
 
           for (var i = 0; i < length; i++) {
 
+              if (data.data[i].username == data.data[i].group_admin) {
+                  var temp = " <a  id=" + data.data[i].group_id + " class=\"list-group-item\" ><span id=\"badge" + data.data[i].group_id + "\" class=\"badge\"></span>" + data.data[i].group_name + "<div class=\"closegroupadmin\">&times;</div></a>";
+              } else {
 
-              var temp = " <a  id=" + data.data[i].group_id + " class=\"list-group-item\" ><span id=\"badge" + data.data[i].group_id + "\" class=\"badge\"></span>" + data.data[i].group_name + "<div class=\"close\">&times;</div></a>";
+                  var temp = " <a  id=" + data.data[i].group_id + " class=\"list-group-item\" ><span id=\"badge" + data.data[i].group_id + "\" class=\"badge\"></span>" + data.data[i].group_name + "<div class=\"closegroupuser\">&times;</div></a>";
+
+              }
+
+
               $("#groupslist").append(temp);
 
 
@@ -251,7 +321,7 @@
               //location.reload();
               console.log(status);
               $("#groupname").val("");
-              updategrouplist();
+              updategrouplist(true);
           });
 
 
@@ -263,7 +333,7 @@
           var addusername = $("#addusername").val();
           var addpublickey = $("#addpublickey").val();
 
-          var url = "/adduser"
+          var url = "/adduser";
           $.post(url, {
               email: addusername,
               publickey: addpublickey,
@@ -274,6 +344,8 @@
               $('#addusername').text = "";
               $('#addpublickey').text = "";
               $('#adduserform').toggle();
+
+              updateuserslist();
 
           });
 
@@ -339,6 +411,29 @@
 
   });
 
+  function updateuserslist() {
+      $("#userslist").empty();
+      var url = "/usersingroup/" + currentgroupid;
+      $.get(url, function(data) {
+          sap = JSON.stringify(data);
+          var length = data.data.length;
+          if (length != 0) {
+              $("#userslist").append("<h4>Group Members<i onclick=\"$('#adduserform').toggle();\" class=\"glyphicon glyphicon-plus pull-right\"></i></h4>");
+          }
+
+          for (var i = 0; i < length; i++) {
+              if (data.data[i].group_admin == "1") {
+                  var timeline = "<div class=\"desc\"><div class=\"details\"><p><a href=\"#\">" + data.data[i].username + "</a><br/><muted>Admin</muted></p></div></div>";
+
+              } else {
+                  var timeline = "<div id=\"delete" + data.data[i].username + "\" class=\"desc\"><div class=\"details\"><div id=\"" + data.data[i].username + "\" class=\"closeuser\">&times;</div><p><a href=\"#\">" + data.data[i].username + "</a><br/><muted></muted></p></div></div>";
+              }
+
+              $("#userslist").append(timeline);
+          }
+
+      });
+  }
 
   function updatelist(id) {
 
@@ -369,6 +464,40 @@
       });
   }
 
+
+  function updategrouplist(decide) {
+      if (decide) {
+          $("#creategroupform").toggle();
+      }else{
+
+        $("#userslist").empty();
+        $("#usertime").click();
+      }
+
+      $("#groupslist").empty();
+
+      $.get("/groupslist", function(data) {
+          sap = JSON.stringify(data);
+          var length = data.data.length;
+
+          for (var i = 0; i < length; i++) {
+
+
+              if (data.data[i].username == data.data[i].group_admin) {
+                  var temp = " <a  id=" + data.data[i].group_id + " class=\"list-group-item\" ><span id=\"badge" + data.data[i].group_id + "\" class=\"badge\"></span>" + data.data[i].group_name + "<div class=\"closegroupadmin\">&times;</div></a>";
+              } else {
+
+                  var temp = " <a  id=" + data.data[i].group_id + " class=\"list-group-item\" ><span id=\"badge" + data.data[i].group_id + "\" class=\"badge\"></span>" + data.data[i].group_name + "<div class=\"closegroupuser\">&times;</div></a>";
+
+              }
+
+              $("#groupslist").append(temp);
+
+
+          }
+
+      });
+  }
 
   function sendFileToServer(formData, status, url, ug) {
       var uploadURL = url; //Upload URL

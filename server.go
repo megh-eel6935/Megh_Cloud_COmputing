@@ -62,6 +62,7 @@ type Msgs struct {
 
 type GroupnamesJson struct {
 	Id          string `json:"group_id"`
+	Username    string `json:"username"`
 	Group_name  string `json:"group_name"`
 	Group_admin string `json:"group_admin"`
 	Timestamp   string `json:"timestamp"`
@@ -69,7 +70,7 @@ type GroupnamesJson struct {
 
 type GroupusernamesJson struct {
 	Id          string `json:"group_id"`
-	Group_name  string `json:"username"`
+	Username    string `json:"username"`
 	Group_admin string `json:"group_admin"`
 	Timestamp   string `json:"timestamp"`
 }
@@ -160,6 +161,17 @@ type groupsList struct {
 	Count        int
 	Items        groupitems
 	ScannedCount int
+}
+type groupdetailitem struct {
+	Username     strd
+	Group_name   strd
+	Timestamp    numd
+	Group_id     strd
+	Usergroup_id strd
+	Group_admin  strd
+}
+type groupdetail struct {
+	Item groupdetailitem
 }
 
 type groupusersList struct {
@@ -474,7 +486,6 @@ func main() {
 		username := getUserName(request)
 		present := validateUsername(username)
 		if present {
-			r.HTML(200, "user", nil)
 			if insertToGroupData(params["id"], username, msg.Message, "text") {
 				r.JSON(200, map[string]interface{}{"status": "success"})
 			} else {
@@ -483,6 +494,27 @@ func main() {
 		} else {
 
 			r.JSON(200, map[string]interface{}{"Access denied": "Unauthorized request"})
+		}
+
+	})
+
+	m.Get("/deletegroup/:groupid", func(params martini.Params, r render.Render, request *http.Request) {
+
+		username := getUserName(request)
+		present := validateUsername(username)
+
+		if present {
+			decide := deleteGroup(params["groupid"], username)
+
+			if decide == 0 {
+				r.JSON(200, map[string]interface{}{"status": "Not able to Delete .Server error"})
+			} else if decide == 1 {
+				r.JSON(200, map[string]interface{}{"status": "Success"})
+			} else if decide == 2 {
+				r.JSON(200, map[string]interface{}{"status": "Not Authorized to delete"})
+			}
+		} else {
+			r.JSON(200, map[string]interface{}{"status": "Access denied"})
 		}
 
 	})
@@ -562,6 +594,24 @@ func main() {
 		}
 
 	})
+
+	m.Get("/deleteuserfromgroup/:groupid/:userid", func(params martini.Params, r render.Render, request *http.Request) {
+
+		userName := getUserName(request)
+		present := validateUsername(userName)
+
+		if present {
+			decide := deleteuserfromgroup(userName, params["groupid"], params["userid"])
+			if decide {
+				r.JSON(200, map[string]interface{}{"status": "Success"})
+			} else {
+				r.JSON(200, map[string]interface{}{"status": "Not able to Delete .Server error"})
+			}
+		} else {
+			r.JSON(200, map[string]interface{}{"status": "Access denied"})
+		}
+
+	})
 	m.Get("/groups", func(r render.Render, request *http.Request) {
 
 		userName := getUserName(request)
@@ -579,6 +629,7 @@ func main() {
 		userName := getUserName(request)
 
 		msgs, decide := getGroupsList(userName)
+		fmt.Println(msgs)
 
 		if decide {
 
@@ -732,6 +783,102 @@ func deletegroupdata(username string, timestamp string, groupid string) int {
 	}
 	return 0
 }
+
+func deleteGroup(groupid string, username string) int {
+
+	get1 := get.NewGetItem()
+	get1.TableName = "usergroups"
+	get1.Key["group_id"] = &attributevalue.AttributeValue{S: groupid}
+	get1.Key["username"] = &attributevalue.AttributeValue{S: username}
+	body, code, err := get1.EndpointReq()
+
+	if err != nil || code != http.StatusOK {
+		fmt.Println("error at 1st get request")
+		return 0
+	} else {
+		var res groupdetail
+		err3 := json.Unmarshal([]byte(body), &res)
+
+		if err3 != nil {
+			return 0
+		}
+
+		if res.Item.Group_admin.S == username {
+
+			usersingroup, _ := getUsersInGroupList(groupid)
+
+			
+			
+			for _, elem := range usersingroup {
+
+				// DELETE AN ITEM
+				
+				del_item1 := delete_item.NewDeleteItem()
+				del_item1.TableName = "usergroups"
+				del_item1.Key["group_id"] = &attributevalue.AttributeValue{S: groupid}
+
+				del_item1.Key["username"] = &attributevalue.AttributeValue{S: elem.Username}
+
+				body1, code1, err1 := del_item1.EndpointReq()
+
+				if err1 != nil || code1 != http.StatusOK {
+					fmt.Printf("fail delete %d %v %s\n", code1, err1, body1)
+					return 0
+				} else {
+
+					fmt.Println("remvoing user", elem.Username)
+					del_item1 := delete_item.NewDeleteItem()
+					del_item1.TableName = "groupusers"
+					del_item1.Key["group_id"] = &attributevalue.AttributeValue{S: groupid}
+
+					del_item1.Key["username"] = &attributevalue.AttributeValue{S: elem.Username}
+
+					body1, code1, err1 := del_item1.EndpointReq()
+
+					if err1 != nil || code1 != http.StatusOK {
+						fmt.Printf("fail delete %d %v %s\n", code1, err1, body1)
+						return 0
+					}
+				}
+			}
+
+			return 1
+		} else {
+			return 2
+		}
+	}
+	return 0
+}
+
+func deleteuserfromgroup(username string, groupid string, userid string) bool {
+
+	del_item1 := delete_item.NewDeleteItem()
+	del_item1.TableName = "groupusers"
+	del_item1.Key["group_id"] = &attributevalue.AttributeValue{S: groupid}
+	del_item1.Key["username"] = &attributevalue.AttributeValue{S: userid}
+	_, code, err := del_item1.EndpointReq()
+
+	if err != nil || code != http.StatusOK {
+		return false
+	} else {
+
+		// DELETE AN ITEM
+		del_item2 := delete_item.NewDeleteItem()
+		del_item2.TableName = "usergroups"
+		del_item2.Key["group_id"] = &attributevalue.AttributeValue{S: groupid}
+		del_item2.Key["username"] = &attributevalue.AttributeValue{S: userid}
+		body1, code1, err1 := del_item2.EndpointReq()
+
+		if err1 != nil || code1 != http.StatusOK {
+			fmt.Printf("fail delete %d %v %s\n", code1, err1, body1)
+
+			return false
+		} else {
+			return true
+		}
+
+	}
+}
 func getUserData(username string) ([]UserDataJson, bool) {
 
 	q := query.NewQuery()
@@ -883,10 +1030,11 @@ func getGroupsList(name string) ([]GroupnamesJson, bool) {
 		fmt.Println(err2)
 	}
 	p := make([]GroupnamesJson, 0)
+
 	for _, elem := range res.Items {
 
-		fmt.Println(elem.Username.S)
-		p = append(p, GroupnamesJson{elem.Group_id.S, elem.Group_name.S, elem.Group_admin.S, elem.Timestamp.N})
+		//fmt.Println(elem.Username.S)
+		p = append(p, GroupnamesJson{elem.Group_id.S, elem.Username.S, elem.Group_name.S, elem.Group_admin.S, elem.Timestamp.N})
 	}
 	return p, true
 }
@@ -910,10 +1058,10 @@ func createGroup(username string, groupname string) bool {
 		put2 := put.NewPutItem()
 		put2.TableName = "usergroups"
 		put2.Item["username"] = &attributevalue.AttributeValue{S: username}
-		put2.Item["timestamp"] = &attributevalue.AttributeValue{N: ctime}
 		put2.Item["group_id"] = &attributevalue.AttributeValue{S: groupid}
 		put2.Item["group_name"] = &attributevalue.AttributeValue{S: groupname}
 		put2.Item["group_admin"] = &attributevalue.AttributeValue{S: username}
+		put2.Item["timestamp"] = &attributevalue.AttributeValue{N: ctime}
 
 		body2, code2, err2 := put2.EndpointReq()
 		if err2 != nil || code2 != http.StatusOK {
