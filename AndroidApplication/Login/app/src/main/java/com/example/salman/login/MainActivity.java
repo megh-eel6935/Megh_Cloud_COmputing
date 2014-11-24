@@ -55,13 +55,11 @@ public class MainActivity extends ActionBarActivity {
             } else {
                 Toast.makeText(v.getContext(), "Network Not Available.\nCheck Network Connection", Toast.LENGTH_LONG).show();
             }
-
         }
 
         private void requestLogin(String uri) {
             LoginRequestHandler LoginButton_clicked = new LoginRequestHandler();
-            LoginButton_clicked.execute(login_email.getText().toString(),
-                    login_password.getText().toString());
+            LoginButton_clicked.execute(uri, login_email.getText().toString(),login_password.getText().toString());
         }
     }
 
@@ -78,6 +76,8 @@ public class MainActivity extends ActionBarActivity {
 
     private class LoginRequestHandler extends AsyncTask<String, String, String> {
 
+        private final String LOG_TAG = MainActivity.class.getSimpleName();
+
         @Override
         protected void onPreExecute() {
             temp_output.append("PreExec" + "\n");
@@ -85,13 +85,29 @@ public class MainActivity extends ActionBarActivity {
 
         @Override
         protected String doInBackground(String... params) {
-            String temp = params[0] + " : " + params[1];
-            return temp;
+            //String temp = params[0]+" : "+params[1];
+            //return temp;
+            String loginCookie;
+            try {
+                loginCookie = UserFunctions.sendPost(params[0], params[1], params[2]);
+                return loginCookie;
+            } catch (Exception e) {
+                e.printStackTrace();
+                return null;
+            }
         }
 
         @Override
         protected void onPostExecute(String s) {
-            temp_output.append(s+"\n");
+
+
+            if (s == null) {
+                Toast.makeText(MainActivity.this, "Cannot connect to web server", Toast.LENGTH_LONG).show();
+                return;
+            }
+            else {
+                temp_output.append(s+"\n");
+            }
         }
     }
 
