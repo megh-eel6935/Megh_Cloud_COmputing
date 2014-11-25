@@ -53,13 +53,19 @@ public class MainActivity extends ActionBarActivity {
             if (isOnline()) {
                 requestLogin("http://104.131.126.89/login");
             } else {
-                Toast.makeText(v.getContext(), "Network Not Available.\nCheck Network Connection", Toast.LENGTH_LONG).show();
+                Toast.makeText(v.getContext(),
+                        "Network Not Available.\nCheck Network Connection",
+                        Toast.LENGTH_LONG).show();
             }
         }
 
         private void requestLogin(String uri) {
             LoginRequestHandler LoginButton_clicked = new LoginRequestHandler();
-            LoginButton_clicked.execute(uri, login_email.getText().toString(),login_password.getText().toString());
+            RequestPackage requestPackage = new RequestPackage();
+            requestPackage.setUri(uri);
+            requestPackage.setParam("email", login_email.getText().toString());
+            requestPackage.setParam("password", login_password.getText().toString());
+            LoginButton_clicked.execute(requestPackage);
         }
     }
 
@@ -71,10 +77,9 @@ public class MainActivity extends ActionBarActivity {
         } else {
             return false;
         }
-
     }
 
-    private class LoginRequestHandler extends AsyncTask<String, String, String> {
+    private class LoginRequestHandler extends AsyncTask<RequestPackage, String, String> {
 
         private final String LOG_TAG = MainActivity.class.getSimpleName();
 
@@ -84,13 +89,17 @@ public class MainActivity extends ActionBarActivity {
         }
 
         @Override
-        protected String doInBackground(String... params) {
+        protected String doInBackground(RequestPackage... params) {
             //String temp = params[0]+" : "+params[1];
             //return temp;
             String loginCookie;
+            String test; /*TODO: remove this shit*/
+
             try {
-                loginCookie = UserFunctions.sendPost(params[0], params[1], params[2]);
-                return loginCookie;
+                loginCookie = UserFunctions.sendAuthenticationPost(params[0]);
+                //return loginCookie;
+                test = UserFunctions.sendGet("http://104.131.126.89/getmessages", loginCookie);
+                return test;
             } catch (Exception e) {
                 e.printStackTrace();
                 return null;
@@ -99,8 +108,6 @@ public class MainActivity extends ActionBarActivity {
 
         @Override
         protected void onPostExecute(String s) {
-
-
             if (s == null) {
                 Toast.makeText(MainActivity.this, "Cannot connect to web server", Toast.LENGTH_LONG).show();
                 return;

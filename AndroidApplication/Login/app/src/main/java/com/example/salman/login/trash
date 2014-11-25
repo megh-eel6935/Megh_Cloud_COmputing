@@ -1,0 +1,50 @@
+        ///____________PRINTING COOKIE LIST___________///
+      /* Map<String, List<String>> map = con.getHeaderFields();
+
+        System.out.println("Printing Cookie list...\n");
+
+        for (Map.Entry<String, List<String>> entry : map.entrySet()) {
+            Log.v(LOG_TAG, "Key : " + entry.getKey()
+                    + " ,Value : " + entry.getValue());
+        }*/
+
+        String cookie = con.getHeaderField("Set-Cookie");
+//////////////////////////////////////////////////////////////////////////
+        CookieManager cookieManager = new CookieManager();
+        CookieHandler.setDefault(cookieManager);
+        HttpCookie receivedCookie = new HttpCookie("session", cookie);
+        receivedCookie.setDomain("http://104.131.126.89/getmessages");
+        receivedCookie.setPath("/");
+        receivedCookie.setVersion(0);
+        cookieManager.getCookieStore().add(new URI("http://104.131.126.89/getmessages"), receivedCookie);
+/////////////////////////////////////////////////////////////////////////////////////////////////
+        ///////////////get request using the cookie
+        URL urlgroup = new URL("http://104.131.126.89/getmessages");
+        HttpURLConnection newConnection = (HttpURLConnection) urlgroup.openConnection();
+        //add request header
+        newConnection.setRequestMethod("GET");
+
+        /*String urlParametersgroup = "session=" + cookie;
+        // Send post request
+        newConnection.setDoOutput(true);
+        DataOutputStream wrgroup = new DataOutputStream(newConnection.getOutputStream());
+        wrgroup.writeBytes(urlParametersgroup);
+        wrgroup.flush();
+        wrgroup.close();*/
+        newConnection.setRequestProperty("session", cookie);
+//        InputStream grouplist = newConnection.getInputStream();
+
+        BufferedReader ingroup = new BufferedReader(new InputStreamReader(newConnection.getInputStream()));
+        String inputLinegroup;
+        StringBuffer responsegroup = new StringBuffer();
+
+        while ((inputLinegroup = ingroup.readLine()) != null) {
+            responsegroup.append(inputLinegroup);
+        }
+        ingroup.close();
+
+
+        //return cookie;
+        return responsegroup.toString();
+    }
+}
