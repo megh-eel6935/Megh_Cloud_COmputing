@@ -126,7 +126,7 @@
           $("#badge" + id).text("");
 
           currentgroupid = id;
-          currentgroupname = $(this).text();
+          currentgroupname = $(this).attr("name");
 
           if (id == "usertime") {
               var url = "/getmessages";
@@ -276,7 +276,7 @@
 
           if (confirm('Clicking on yes will remove you from the group')) {
               var id = this.id;
-              var url = '/deleteuserfromgroup/' + currentgroupid + '/' + id;
+              var url = '/removemefromgroup/' + id;
               $.get(url, function(data) {
                   console.log(data.status);
                   if (data.status == "Success") {
@@ -295,13 +295,12 @@
           for (var i = 0; i < length; i++) {
 
               if (data.data[i].username == data.data[i].group_admin) {
-                  var temp = " <a  id=" + data.data[i].group_id + " class=\"list-group-item\" ><span id=\"badge" + data.data[i].group_id + "\" class=\"badge\"></span>" + data.data[i].group_name + "<div class=\"closegroupadmin\">&times;</div></a>";
+                  var temp = " <a  id=" + data.data[i].group_id + " class=\"list-group-item\" name=\""+data.data[i].group_name+"\" ><span id=\"badge" + data.data[i].group_id + "\" class=\"badge\"></span>" + data.data[i].group_name + "<div class=\"closegroupadmin\">&times;</div></a>";
               } else {
 
-                  var temp = " <a  id=" + data.data[i].group_id + " class=\"list-group-item\" ><span id=\"badge" + data.data[i].group_id + "\" class=\"badge\"></span>" + data.data[i].group_name + "<div class=\"closegroupuser\">&times;</div></a>";
+                  var temp = " <a  id=" + data.data[i].group_id + " class=\"list-group-item\" name=\""+data.data[i].group_name+"\" ><span id=\"badge" + data.data[i].group_id + "\" class=\"badge\"></span>" + data.data[i].group_name + "<div id="+ data.data[i].group_id + " class=\"closegroupuser\">&times;</div></a>";
 
               }
-
 
               $("#groupslist").append(temp);
 
@@ -315,6 +314,7 @@
           var value = $("#groupname").val();
 
           var url = "/creategroup"
+          console.log("creategroup name"+value);
           $.post(url, {
               message: value
           }, function(data, status) {
@@ -323,7 +323,7 @@
               $("#groupname").val("");
               updategrouplist(true);
           });
-
+  
 
       });
 
@@ -332,7 +332,8 @@
       $("#adduser").click(function() {
           var addusername = $("#addusername").val();
           var addpublickey = $("#addpublickey").val();
-
+          console.log(addusername);
+           console.log(currentgroupname);
           var url = "/adduser";
           $.post(url, {
               email: addusername,
@@ -345,10 +346,10 @@
               $('#addpublickey').text = "";
               $('#adduserform').toggle();
 
-              updateuserslist();
+             updateuserslist();
 
           });
-
+          
 
       });
 
@@ -385,6 +386,7 @@
 
       $("#userfile").change(function() {
           var id = currentgroupid;
+         
           if (id == "usertime") {
               var url = "/uploadfile";
           } else {
@@ -403,7 +405,7 @@
 
                   updatelist(id);
                   //    chat.ws.send('{"type":"message","from":"sanath","groupid":"' + currentgroupid + '","text":"file upload"}');
-
+                  
               }
           });
       });
@@ -436,7 +438,7 @@
   }
 
   function updatelist(id) {
-
+     
       if (id == "usertime") {
           var url = "/getmessages";
       } else {
@@ -460,7 +462,7 @@
               }
               $("#usertimeline").append(timeline);
           }
-
+       
       });
   }
 
@@ -468,10 +470,10 @@
   function updategrouplist(decide) {
       if (decide) {
           $("#creategroupform").toggle();
-      }else{
+      } else {
 
-        $("#userslist").empty();
-        $("#usertime").click();
+          $("#userslist").empty();
+          $("#usertime").click();
       }
 
       $("#groupslist").empty();
@@ -481,19 +483,16 @@
           var length = data.data.length;
 
           for (var i = 0; i < length; i++) {
-
-
+  
               if (data.data[i].username == data.data[i].group_admin) {
-                  var temp = " <a  id=" + data.data[i].group_id + " class=\"list-group-item\" ><span id=\"badge" + data.data[i].group_id + "\" class=\"badge\"></span>" + data.data[i].group_name + "<div class=\"closegroupadmin\">&times;</div></a>";
+                  var temp = " <a  id=" + data.data[i].group_id + " class=\"list-group-item\" name=\""+data.data[i].group_name+"\" ><span id=\"badge" + data.data[i].group_id + "\" class=\"badge\"></span>" + data.data[i].group_name + "<div class=\"closegroupadmin\">&times;</div></a>";
               } else {
 
-                  var temp = " <a  id=" + data.data[i].group_id + " class=\"list-group-item\" ><span id=\"badge" + data.data[i].group_id + "\" class=\"badge\"></span>" + data.data[i].group_name + "<div class=\"closegroupuser\">&times;</div></a>";
+                  var temp = " <a  id=" + data.data[i].group_id + " class=\"list-group-item\" name=\""+data.data[i].group_name+"\" ><span id=\"badge" + data.data[i].group_id + "\" class=\"badge\"></span>" + data.data[i].group_name + "<div id="+ data.data[i].group_id + " class=\"closegroupuser\">&times;</div></a>";
 
               }
 
               $("#groupslist").append(temp);
-
-
           }
 
       });

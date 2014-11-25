@@ -41,6 +41,12 @@ type Signin struct {
 	Password string `form:"password"`
 }
 
+type MobileSignin struct {
+	Email           string `form:"email"`
+	Password        string `form:"password"`
+	Registration_id string `form:"registration_id"`
+}
+
 type Pkey struct {
 	Email     string `form:"email"`
 	Publickey string `form:"publickey"`
@@ -303,15 +309,13 @@ func main() {
 		}
 	})
 
-	m.Get("/login", func(r render.Render) {
-		r.HTML(200, "login", nil)
-	})
-
 	m.Post("/login", binding.Form(Signin{}), func(signin Signin, r render.Render, response http.ResponseWriter, s sessions.Session) {
 
 		//err := db.QueryRow("select id,password from username where username='" + signin.Email + "'").Scan(&id,&hashedPassword)
 		get1 := get.NewGetItem()
 		get1.TableName = "users"
+		fmt.Println("entir form is ", signin)
+		fmt.Println("username is ", signin.Email)
 		get1.Key["username"] = &attributevalue.AttributeValue{S: signin.Email}
 
 		body, code, err := get1.EndpointReq()
@@ -342,6 +346,65 @@ func main() {
 		}
 	})
 
+	m.Post("/mobilelogin", binding.Form(MobileSignin{}), func(signin MobileSignin, r render.Render, response http.ResponseWriter, s sessions.Session) {
+
+		//err := db.QueryRow("select id,password from username where username='" + signin.Email + "'").Scan(&id,&hashedPassword)
+		get1 := get.NewGetItem()
+		get1.TableName = "users"
+
+		fmt.Println("entir form is ", signin)
+		fmt.Println("username is ", signin.Email)
+		get1.Key["username"] = &attributevalue.AttributeValue{S: signin.Email}
+
+		body, code, err := get1.EndpointReq()
+		fmt.Println("body is %s", body)
+		if len(body) <= 2 || err != nil || code != http.StatusOK {
+			fmt.Printf("get failed %d %v %d \n", code, err, len(body))
+			r.JSON(200, map[string]interface{}{"status": "Username doesot exists in the database"})
+		} else {
+			payload := []byte(body)
+			var result map[string]interface{}
+			if err := json.Unmarshal(payload, &result); err != nil {
+				panic(err)
+			}
+
+			row := result["Item"].(map[string]interface{})
+			password := row["password"].(map[string]interface{})
+			publickey := row["publickey"].(map[string]interface{})
+			displayname := row["displayname"].(map[string]interface{})
+			err2 := bcrypt.CompareHashAndPassword([]byte(password["S"].(string)), []byte(signin.Password))
+
+			if err2 != nil {
+				r.JSON(200, map[string]interface{}{"status": "Email or password is incorrect.Try again"})
+
+			} else {
+
+				ctime := fmt.Sprintf("%v", time.Now().Unix())
+				put1 := put.NewPutItem()
+				put1.TableName = "users"
+				put1.Item["username"] = &attributevalue.AttributeValue{S: signin.Email + "android"}
+				put1.Item["password"] = &attributevalue.AttributeValue{S: password["S"].(string)}
+				put1.Item["displayname"] = &attributevalue.AttributeValue{S: displayname["S"].(string)}
+				put1.Item["timestamp"] = &attributevalue.AttributeValue{N: ctime}
+				put1.Item["publickey"] = &attributevalue.AttributeValue{S: publickey["S"].(string)}
+				put1.Item["registration_id"] = &attributevalue.AttributeValue{S: signin.Registration_id}
+				body1, code1, err1 := put1.EndpointReq()
+
+				if err1 != nil || code != http.StatusOK {
+					fmt.Printf("put failed %d %v %s\n", code1, err1, body1)
+					r.JSON(200, map[string]interface{}{"status": "Registration failed .Try again"})
+
+				} else {
+
+					setSession(signin.Email, publickey["S"].(string), response)
+					r.JSON(200, map[string]interface{}{"status": "Success"})
+
+				}
+
+			}
+		}
+	})
+
 	m.Post("/adduser", binding.Form(Pkey{}), func(pkey Pkey, r render.Render, request *http.Request, response http.ResponseWriter, s sessions.Session) {
 		ctime := fmt.Sprintf("%v", time.Now().Unix())
 		username := getUserName(request)
@@ -367,6 +430,7 @@ func main() {
 
 				put2 := put.NewPutItem()
 				put2.TableName = "usergroups"
+				fmt.Println("value to be sinserted", pkey.Email)
 				put2.Item["username"] = &attributevalue.AttributeValue{S: pkey.Email}
 				put2.Item["group_id"] = &attributevalue.AttributeValue{S: pkey.Groupid}
 				put2.Item["group_name"] = &attributevalue.AttributeValue{S: pkey.Groupname}
@@ -431,7 +495,7 @@ func main() {
 				r.HTML(200, "register", "Registration failed .Try again")
 
 			} else {
-				r.HTML(200, "login", "Registration Successfull.  You can login now")
+				r.HTML(200, "index", "Registration Successfull.  You can login now")
 				fmt.Printf("%v\n%v\n,%v\n", body1, code1, err1)
 			}
 
@@ -601,7 +665,25 @@ func main() {
 		present := validateUsername(userName)
 
 		if present {
-			decide := deleteuserfromgroup(userName, params["groupid"], params["userid"])
+			decide := deleteuserfromgroup(params["groupid"], params["userid"])
+			if decide {
+				r.JSON(200, map[string]interface{}{"status": "Success"})
+			} else {
+				r.JSON(200, map[string]interface{}{"status": "Not able to Delete .Server error"})
+			}
+		} else {
+			r.JSON(200, map[string]interface{}{"status": "Access denied"})
+		}
+
+	})
+
+	m.Get("/removemefromgroup/:groupid", func(params martini.Params, r render.Render, request *http.Request) {
+
+		userName := getUserName(request)
+		present := validateUsername(userName)
+
+		if present {
+			decide := deleteuserfromgroup(params["groupid"], userName)
 			if decide {
 				r.JSON(200, map[string]interface{}{"status": "Success"})
 			} else {
@@ -807,12 +889,10 @@ func deleteGroup(groupid string, username string) int {
 
 			usersingroup, _ := getUsersInGroupList(groupid)
 
-			
-			
 			for _, elem := range usersingroup {
 
 				// DELETE AN ITEM
-				
+
 				del_item1 := delete_item.NewDeleteItem()
 				del_item1.TableName = "usergroups"
 				del_item1.Key["group_id"] = &attributevalue.AttributeValue{S: groupid}
@@ -850,7 +930,7 @@ func deleteGroup(groupid string, username string) int {
 	return 0
 }
 
-func deleteuserfromgroup(username string, groupid string, userid string) bool {
+func deleteuserfromgroup(groupid string, userid string) bool {
 
 	del_item1 := delete_item.NewDeleteItem()
 	del_item1.TableName = "groupusers"
