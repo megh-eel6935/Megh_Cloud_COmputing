@@ -1,162 +1,190 @@
-<!DOCTYPE HTML>
-<html>
+<!DOCTYPE html>
+<html lang="en">
+
 <head>
-	<title>Megh - Home</title>
-	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
-	<meta name="description" content="" />
-	<meta name="keywords" content="" />
-	<!--[if lte IE 8]><script src="css/ie/html5shiv.js"></script><![endif]-->
-	<script src="js/jquery.min.js"></script>
-	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
-	<link href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css" rel="stylesheet">
-	<script src="js/jquery.dropotron.min.js"></script>
-	<script src="js/jquery.scrollgress.min.js"></script>
-	<noscript>
-		<link rel="stylesheet" href="css/skel.css" />
-		<link rel="stylesheet" href="css/style.css" />
-		<link rel="stylesheet" href="css/style-wide.css" />
-		<link rel="stylesheet" href="css/dragdrop.css" />
-	</noscript>
-	<script src="js/skel.min.js"></script>
-	<script src="js/skel-layers.min.js"></script>
-	<script src="js/init.js"></script>
-	<script src="main.js"></script>
-	<!--[if lte IE 8]><link rel="stylesheet" href="css/ie/v8.css" /><![endif]-->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="Dashboard">
+    <meta name="keyword" content="Dashboard, Bootstrap, Admin, Template, Theme, Responsive, Fluid, Retina">
+
+    <title>DASHGUM - FREE Bootstrap Admin Template</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="assets/css/bootstrap_flatty.css" rel="stylesheet">
+    <!--external css-->
+    <link href="assets/css/font-awesome.min.css" rel="stylesheet" />
+
+    <!-- Custom styles for this template -->
+    <link href="assets/css/style.css" rel="stylesheet">
+    <link href="assets/css/style-responsive.css" rel="stylesheet">
+
 </head>
+
 <body>
-	<!-- Header -->
-	<header id="header">
-		<h1><a href="/">Megh</a></h1>
-		<nav id="nav">
-			<ul>
-				<li><a href="#">Hi  {{.}}</a></li>
-				<li><a id="publickey"> </a></li>
-				<li><a href="/groups">Groups</a></li>
-				<li><a href="" >Help</a></li>
-				<li><a href="/logout" class="button">Logout</a></li>
-			</ul>
-		</nav>
-	</header>
 
-	<section id="main" class="container">
+    <section id="container">
 
-		<header>
-			<h2>Welcome</h2>
-		</header>
-		<!-- Nav tabs -->
-		<div class="container">
-			<!-------->
-			<div id="content">
-				<ul id="tabs" class="nav nav-tabs" data-tabs="tabs">
-					<li class="active"><a href="#home" data-toggle="tab">Home</a></li>
-					<li><a href="#groups" data-toggle="tab">Groups</a></li>
-				</ul>
-				<div id="my-tab-content" class="tab-content">
-					<div class="tab-pane active" id="home">
-						<br>
-						<br>
-						<div class="row">
-							<div class="12u">
-								<input type="file" id="userfile" style="visibility: hidden;" />	
-								<div id="userdragandrophandler" onclick="document.getElementById('userfile').click(); return false;">
-									Click or Drag & Drop Files for file upload
-								</div>
 
-								<div id="status1"></div>
-								<br>
-								<br>
-								<br>
-								<form id="user-send-form" method="post" action="">
+        <div class="navbar navbar-default">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-responsive-collapse">
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="#">Megh</a>
+            </div>
+            <div class="navbar-collapse collapse navbar-responsive-collapse">
+                
+                <form class="navbar-form navbar-left">
+                    <input type="text" class="form-control col-lg-8" placeholder="Search">
+                </form>
+                <ul class="nav navbar-nav navbar-right">
+                    
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">My Profile <b class="caret"></b></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="#">Username : {{.}}</a>
+                            </li>
+                            
+                            <li class="divider"></li>
+                            <li><a href="#"><div id="publickey"></div></a>
+                            </li>
+                        </ul>
+                    </li>
+                     <li><a href="/logout">Logout</a>
+                    </li>
+                </ul>
 
-									<div class="row uniform half">
-										<div class="12u">
-											<input id="text-input" type="text" name="message" value="" placeholder="Enter your message" />
-										</div>
-									</div>
-									<br>
-									<input type="button" id="userfilesend" value="Send" />	
-								</form>
-								<div class="12u">
-									<!-- Text -->
-									<section class="box">
-										<table class="table">												<tbody id="user">
-										</tbody>  
-									</table>
-								</section>
-							</div>
+            </div>
+        </div>
+
+
+  
+
+        <section class="wrapper">
+
+            <div class="row">
+                <div class="col-md-3">
+                    <br>
+                    <br>
+                    <br>
+                    <br>	
+                    <div class="list-group">
+						  <a href="#" id="usertime" class="list-group-item active" >
+						  <span class="badge"></span>
+
+						    My Timeline
+
+						  </a>
+						  <p><h4 align="center">----- Groups -----<i onclick="$('#creategroupform').toggle();" class="glyphicon glyphicon-plus pull-right"></i></h4></p>
+						  <div id="groupslist">
+
+						  </div>
+
 						</div>
-					</div>
-				</div>
-				<div class="tab-pane" id="groups">
-					<br>
-					<br>
-					<div class="row">
-						<div class="12u">
-							<div class="row collapse-at-2">
-								<div class="3u">
-									<br>
-									<br>
-									<ul class="actions vertical">
-											<ul class="list-group" id="addgroups">
-											</ul>
-											<br>
 
-											<form method="post" action="">
-													<input type="text" id="groupname" name="message" value="" placeholder="Enter Group name" />
-											
-												<br>
-												<input id="creategroupsubmit" type="button" value="Create Group" />	
-											</form>
-									</ul>
-								</div>	
-									<div class="9u">
-										<section class="box">
-											<div id="adduserbox" hidden>
-											<input type="text" id="addusername" value="" placeholder="Enter username" />
-											<input type="text" id="addpublickey" value="" placeholder="Enter public key" />
-											<input type="button" id="adduser" value="Add User" />
-											</div>
-											<input type="button" id="addusers" value="Add User" />
+						<form role="form" class="form-horizontal">
 
-											<input type="file" id="groupfile" style="visibility: hidden;" />	
-											<div id="groupdragandrophandler" onclick="document.getElementById('groupfile').click(); return false;">
-												Click or Drag n Drop Files for file upload</div>
-												<div id="status1"></div>
-												<form id="send-form" method="post" action="">
-													<div class="row uniform half">
-														<div class="12u">
-															<input type="text" id="groupmessage" name="message" value="" placeholder="Enter your message" />
-														</div>
-													</div>
-													<br>
-													<input type="button" id="groupsubmit" value="Send" />
-														
-												</form>
-												<table class="table">
-													<tbody id="group">
-													</tbody>  
-												</table>
-											</section>
-										</div>
-									</div>
-								</div>
-							</div>
-						</div>
-					</div>
-				</section>		<!-- Footer -->
+                        <div id="creategroupform" class="col-md-12 form-group" hidden>
+                            <h4>Group Name</h4>
+                            <br>
+                            
+                            <input class="form-control" id="groupname" placeholder="Enter Group Name"></input>
+                            <br>
+                            <button type="button"  class="btn btn-primary" id="creategroupsubmit">Create Group</button>
+                          
+                        </div>
+                        </form>
 
-				<footer id="footer">
-					<ul class="icons">
-						<li><a href="#" class="icon fa-twitter"><span class="label">Twitter</span></a></li>
-						<li><a href="#" class="icon fa-facebook"><span class="label">Facebook</span></a></li>
-						<li><a href="#" class="icon fa-instagram"><span class="label">Instagram</span></a></li>
-						<li><a href="#" class="icon fa-github"><span class="label">Github</span></a></li>
-						<li><a href="#" class="icon fa-dribbble"><span class="label">Dribbble</span></a></li>
-						<li><a href="#" class="icon fa-google-plus"><span class="label">Google+</span></a></li>
-					</ul>
-					<ul class="copyright">
-						<li>&copy; Untitled. All rights reserved.</li><li>Design: <a href="http://html5up.net">HTML5 UP</a></li>
-					</ul>
-				</footer>
-			</body>
-			</html>
+                </div>
+                <div class="col-md-6">
+                   
+                    <input type="file" id="userfile" style="visibility: hidden;" />
+                    <form role="form" id="send-form" class="form-horizontal">
+
+                        <div class="form-group">
+                            <label class="col-sm-2" for="inputBody">Text/Url</label>
+                            <div class="col-sm-10">
+                                <textarea class="form-control" id="text-input" rows="2"></textarea>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-2" for="inputTo">File Upload</label>
+                            <div class="col-sm-10">
+                                <div id="userdragandrophandler" onclick="document.getElementById('userfile').click(); return false;">
+                                    <input class="form-control" id="inputTo" placeholder="click here or Drag n Drog files " readonly >
+                                </div>
+                            </div>
+                        </div>
+
+
+                        <div class="col-sm-12">
+                            <button type="button" id="userfilesend" class="btn btn-primary pull-right">Send <i class="fa fa-arrow-circle-right fa-lg"></i>
+                            </button>
+                        </div>
+                    </form>
+                    <br>
+                    <br>
+
+                    <ul class="timeline" id="usertimeline">
+                    
+
+                    </ul>
+                </div>
+
+
+                <div class="col-md-3">
+
+                      <br><br>
+                  
+                	<div id="userslist">
+                		
+
+                	</div>
+                	
+
+                  <form id="adduserform" role="form" class="form-horizontal" hidden>
+
+                        <div class="col-md-12 form-group">
+                            <h5>Username</h5>
+                            
+                            <input class="form-control" id="addusername" placeholder="Enter Username"></input>
+                          
+                            <h5>Public key</h5>
+                            
+                            
+                            <input class="form-control" id="addpublickey" placeholder="Enter Public key"></input>
+                            <br>
+                            <button type="button"  class="btn btn-primary" id="adduser">Add User</button>
+                          
+                        </div>
+                   </form>
+
+
+                </div>
+
+            </div>
+            </div>
+
+
+        </section>
+    </section>
+
+
+    <script src="js/jquery.min.js"></script>
+    <script>
+window.paceOptions = {
+    ajax: {
+        trackMethods: ['GET', 'POST', 'PUT', 'DELETE', 'REMOVE']
+    }
+};
+</script>
+    <script src="js/pace.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+    <script src="main.js"></script>
+
+</body>
+
+</html>

@@ -1,155 +1,317 @@
-<!DOCTYPE HTML>
-<!--
-	Alpha by HTML5 UP
-	html5up.net | @n33co
-	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
--->
-<html>
-	<head>
-		<title>Megh</title>
-		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
-		<meta name="description" content="" />
-		<meta name="keywords" content="" />
-		<!--[if lte IE 8]><script src="css/ie/html5shiv.js"></script><![endif]-->
-		<script src="js/jquery.min.js"></script>
-		<script src="js/jquery.dropotron.min.js"></script>
-		<script src="js/jquery.scrollgress.min.js"></script>
-		<script src="js/skel.min.js"></script>
-		<script src="js/skel-layers.min.js"></script>
-		<script src="js/init.js"></script>
-		<noscript>
-			<link rel="stylesheet" href="css/skel.css" />
-			<link rel="stylesheet" href="css/style.css" />
-			<link rel="stylesheet" href="css/style-wide.css" />
-		</noscript>
-		<!--[if lte IE 8]><link rel="stylesheet" href="css/ie/v8.css" /><![endif]-->
-	</head>
-	<body class="landing">
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="shortcut icon" href="assets/ico/favicon.png">
 
-		<!-- Header -->
-			<header id="header" class="alt">
-				<h1><a href="index.html">Megh</a> </h1>
-				<nav id="nav">
-					<ul>
-						<li><a href="">About</a></li>
-						
-						<li><a href="" class="button">Help</a></li>
-					</ul>
-				</nav>
-			</header>
+    <title>SPOT - Free Bootstrap 3 Theme</title>
 
-		<!-- Banner -->
-			<section id="banner">
-				<h2>Megh</h2>
-				<p>Cloud Computing Project</p>
-				<ul class="actions">
-					<li><a href="/register" class="button special">Sign Up</a></li>
-					<li><a href="/login" class="button">Sign in</a></li>
-				</ul>
-			</section>
+    <!-- Bootstrap core CSS -->
+    <link href="assets/css/bootstrap.css" rel="stylesheet">
+    <link href="assets/css/font-awesome.min.css" rel="stylesheet">
 
-		<!-- Main -->
-			<section id="main" class="container">
-		
-				<section class="box special">
-					<header class="major">
-						<h2>Share Data with a single Click
-						</h2>
-						<p>Helps in sharing data between you devices and friends<br />
-						</p>
-					</header>
-					<span class="image featured"><img src="images/pic01.jpg" alt="" /></span>
-				</section>
-						
-				<section class="box special features">
-					<div class="features-row">
-						<section>
-							<span class="icon major fa-bolt accent2"></span>
-							<h3>Magna etiam</h3>
-							<p>Integer volutpat ante et accumsan commophasellus sed aliquam feugiat lorem aliquet ut enim rutrum phasellus iaculis accumsan dolore magna aliquam veroeros.</p>
-						</section>
-						<section>
-							<span class="icon major fa-area-chart accent3"></span>
-							<h3>Ipsum dolor</h3>
-							<p>Integer volutpat ante et accumsan commophasellus sed aliquam feugiat lorem aliquet ut enim rutrum phasellus iaculis accumsan dolore magna aliquam veroeros.</p>
-						</section>
-					</div>
-					<div class="features-row">
-						<section>
-							<span class="icon major fa-cloud accent4"></span>
-							<h3>Sed feugiat</h3>
-							<p>Integer volutpat ante et accumsan commophasellus sed aliquam feugiat lorem aliquet ut enim rutrum phasellus iaculis accumsan dolore magna aliquam veroeros.</p>
-						</section>
-						<section>
-							<span class="icon major fa-lock accent5"></span>
-							<h3>Enim phasellus</h3>
-							<p>Integer volutpat ante et accumsan commophasellus sed aliquam feugiat lorem aliquet ut enim rutrum phasellus iaculis accumsan dolore magna aliquam veroeros.</p>
-						</section>
-					</div>
-				</section>
-					
-				<div class="row">
-					<div class="6u">
+   
+    <script src="js/jquery.min.js"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+     <!-- Custom styles for this template -->
+    <link href="assets/css/main.css" rel="stylesheet">
 
-						<section class="box special">
-							<span class="image featured"><img src="images/pic02.jpg" alt="" /></span>
-							<h3>Sed lorem adipiscing</h3>
-							<p>Integer volutpat ante et accumsan commophasellus sed aliquam feugiat lorem aliquet ut enim rutrum phasellus iaculis accumsan dolore magna aliquam veroeros.</p>
-							<ul class="actions">
-								<li><a href="#" class="button alt">Learn More</a></li>
-							</ul>
-						</section>
-						
-					</div>
-					<div class="6u">
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+    <![endif]-->
+  </head>
 
-						<section class="box special">
-							<span class="image featured"><img src="images/pic03.jpg" alt="" /></span>
-							<h3>Accumsan integer</h3>
-							<p>Integer volutpat ante et accumsan commophasellus sed aliquam feugiat lorem aliquet ut enim rutrum phasellus iaculis accumsan dolore magna aliquam veroeros.</p>
-							<ul class="actions">
-								<li><a href="#" class="button alt">Learn More</a></li>
-							</ul>
-						</section>
+  <body>
 
+    <!-- Fixed navbar -->
+    <div class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#">MEGH</a>
+        </div>
+        <div class="navbar-collapse collapse">
+          <ul class="nav navbar-nav navbar-right">
+            <li class="active"><a href="index.html">HOME</a></li>
+            <li><a href="about.html">ABOUT</a></li>
+            <li><a href="services.html">SERVICES</a></li>
+            <li><a href="works.html">WORKS</a></li>
+            <li><a data-toggle="modal" data-target="#myModal" href="#myModal"><i class="fa fa-envelope-o"></i></a></li>
+          </ul>
+        </div><!--/.nav-collapse -->
+      </div>
+    </div>
+
+
+	<div id="headerwrap" >
+		<div class="container" id="maincl">
+			<div class="row centered">
+				<div class="col-lg-8 col-lg-offset-2">
+				<h1>Megh</b></h1>
+				<h2>Share data with a single click</h2>
+				
+				<a class="btn btn-danger">{{.}}</a>
+				
+				<div class="col-md-6 col-md-offset-3">
+				 <form id="loginform" role="form" method="post" action="/login">
+                            <br>
+                            <div class="form-group">
+                                <input type="email" name="email" id="email" class="form-control input-sm" placeholder="Email Address">
+                            </div>
+                            <div class="form-group">
+                                <input type="password" name="password" id="password" class="form-control input-sm" placeholder="Password">
+                            </div>
+                            
+                            <button id="signinbutton" type="submit" class="btn btn-danger btn-lg" > Login </button>
+                             <a href="/register" class="btn btn-danger btn-lg" >Register</a>
+                            </form>
+                           </div>
+                            <div class="col-md-4"></div>
+                            </div>
+				       
+				
+				</div>
+			</div><!-- row -->
+
+		</div><!-- container -->
+		<div class="container" method="post" id="registercontainer" hidden>
+        <div class="row centered-form">
+            <div class="col-xs-12 col-sm-8 col-md-4 col-sm-offset-2 col-md-offset-4">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title text-center">Please Register</h3>
+                    </div>
+                    <div class="panel-body">
+                        <form role="form" method="post" action="/register">
+                            
+                            <div class="form-group">
+                                <input type="email" name="email" id="email" class="form-control input-sm" placeholder="Email Address">
+                            </div>
+                            <div class="form-group">
+                                <input type="text" name="first_name" id="nickname" class="form-control input-sm" placeholder="Display Name">
+                            </div>
+                            <div class="row">
+                                <div class="col-xs-6 col-sm-6 col-md-6">
+                                    <div class="form-group">
+                                        <input type="password" name="password" id="password" class="form-control input-sm" placeholder="Password">
+                                    </div>
+                                </div>
+                                <div class="col-xs-6 col-sm-6 col-md-6">
+                                    <div class="form-group">
+                                        <input type="password" name="password_confirmation" id="password_confirmation" class="form-control input-sm" placeholder="Confirm Password">
+                                    </div>
+                                </div>
+                            </div>
+                             <div class="row">
+                                <div class="col-xs-6 col-sm-6 col-md-6">
+                                    <div class="form-group">
+                                        <input type="submit" value="Register" class="btn btn-info btn-block">
+                                    </div>
+                                </div>
+                                 </form>
+                                <div class="col-xs-6 col-sm-6 col-md-6">
+                                    
+                                        <button  id="cancelregister" class="btn btn-info btn-block">Close </button>
+                                    
+                                </div>
+                            </div>
+                            
+                       
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+	</div><!-- headerwrap -->
+
+ 
+
+				
+<div class="modal fade" id="login">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+        <h4 class="modal-title">Modal title</h4>
+      </div>
+      <div class="modal-body">
+        <form method="post" action="/login">
+        <input type="email" name="email" id="email" value="" placeholder="Email" />
+        <br>
+		<input type="password" name="password" id="subject" value="" placeholder="Password" />
+		<br>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="submit" class="btn btn-primary">Submit</button>
+        </form>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+	<div class="container w">
+		<div class="row centered">
+			<br><br>
+			<div class="col-lg-4">
+				<i class="fa fa-heart"></i>
+				<h4>DESIGN</h4>
+				<p>There are many variations of passages of Lorem Ipsum available, but the majority have suffered alteration in some form, by injected humour, or randomised words which don't look even believable.</p>
+			</div><!-- col-lg-4 -->
+
+			<div class="col-lg-4">
+				<i class="fa fa-laptop"></i>
+				<h4>BOOTSTRAP</h4>
+				<p>There are many variations of passages of Lorem Ipsum available, but the majority have suffered alteration in some form, by injected humour, or randomised words which don't look even believable.</p>
+			</div><!-- col-lg-4 -->
+
+			<div class="col-lg-4">
+				<i class="fa fa-trophy"></i>
+				<h4>SUPPORT</h4>
+				<p>There are many variations of passages of Lorem Ipsum available, but the majority have suffered alteration in some form, by injected humour, or randomised words which don't look even believable.</p>
+			</div><!-- col-lg-4 -->
+		</div><!-- row -->
+		<br>
+		<br>
+	</div><!-- container -->
+
+
+	<!-- PORTFOLIO SECTION -->
+	<div id="dg">
+		<div class="container">
+			<div class="row centered">
+				<h4>LATEST WORKS</h4>
+				<br>
+				<div class="col-lg-4">
+					<div class="tilt">
+					<a href="#"><img src="assets/img/p01.png" alt=""></a>
 					</div>
 				</div>
 
-			</section>
-			
-		<!-- CTA -->
-			<section id="cta">
-				
-				<h2>Sign up for beta access</h2>
-				<p>Blandit varius ut praesent nascetur eu penatibus nisi risus faucibus nunc.</p>
-				
-				<form>
-					<div class="row uniform half collapse-at-2">
-						<div class="8u">
-							<input type="email" name="email" id="email" placeholder="Email Address" />
-						</div>
-						<div class="4u">
-							<input type="submit" value="Sign Up" class="fit" />
-						</div>
+				<div class="col-lg-4">
+					<div class="tilt">
+					<a href="#"><img src="assets/img/p03.png" alt=""></a>
 					</div>
-				</form>
-				
-			</section>
-			
-		<!-- Footer -->
-			<footer id="footer">
-				<ul class="icons">
-					<li><a href="#" class="icon fa-twitter"><span class="label">Twitter</span></a></li>
-					<li><a href="#" class="icon fa-facebook"><span class="label">Facebook</span></a></li>
-					<li><a href="#" class="icon fa-instagram"><span class="label">Instagram</span></a></li>
-					<li><a href="#" class="icon fa-github"><span class="label">Github</span></a></li>
-					<li><a href="#" class="icon fa-dribbble"><span class="label">Dribbble</span></a></li>
-					<li><a href="#" class="icon fa-google-plus"><span class="label">Google+</span></a></li>
-				</ul>
-				<ul class="copyright">
-					<li>&copy; Untitled. All rights reserved.</li><li>Design: <a href="http://html5up.net">HTML5 UP</a></li>
-				</ul>
-			</footer>
+				</div>
 
-	</body>
+				<div class="col-lg-4">
+					<div class="tilt">
+					<a href="#"><img src="assets/img/p02.png" alt=""></a>
+					</div>
+				</div>
+			</div><!-- row -->
+		</div><!-- container -->
+	</div><!-- DG -->
+
+
+	<!-- FEATURE SECTION -->
+	<div class="container wb">
+		<div class="row centered">
+			<br><br>
+			<div class="col-lg-8 col-lg-offset-2">
+				<h4>WE CREATE FIRST CLASS DESIGN</h4>
+				<p>By being true to the brand we represent, we elevate the audiences’ relationship to it. Like becomes love becomes a passion. Passion becomes advocacy. And we see the brand blossom from within, creating a whole story the audience embraces. That’s when the brand can truly flex its muscles.</p>
+			<p><br/><br/></p>
+			</div>
+			<div class="col-lg-2"></div>
+			<div class="col-lg-10 col-lg-offset-1">
+				<img class="img-responsive" src="assets/img/munter.png" alt="">
+			</div>
+		</div><!-- row -->
+	</div><!-- container -->
+
+
+	<div id="lg">
+		<div class="container">
+			<div class="row centered">
+				<h4>OUR AWESOME CLIENTS</h4>
+				<div class="col-lg-2 col-lg-offset-1">
+					<img src="assets/img/c01.gif" alt="">
+				</div>
+				<div class="col-lg-2">
+					<img src="assets/img/c02.gif" alt="">
+				</div>
+				<div class="col-lg-2">
+					<img src="assets/img/c03.gif" alt="">
+				</div>
+				<div class="col-lg-2">
+					<img src="assets/img/c04.gif" alt="">
+				</div>
+				<div class="col-lg-2">
+					<img src="assets/img/c05.gif" alt="">
+				</div>
+			</div><!-- row -->
+		</div><!-- container -->
+	</div><!-- dg -->
+	
+	
+	<div id="r">
+		<div class="container">
+			<div class="row centered">
+				<div class="col-lg-8 col-lg-offset-2">
+					<h4>WE ARE STORYTELLERS. BRANDS ARE OUR SUBJECTS. DESIGN IS OUR VOICE.</h4>
+					<p>We believe ideas come from everyone, everywhere. At BlackTie, everyone within our agency walls is a designer in their own right. And there are a few principles we believe—and we believe everyone should believe—about our design craft. These truths drive us, motivate us, and ultimately help us redefine the power of design.</p>
+				</div>
+			</div><!-- row -->
+		</div><!-- container -->
+	</div><! -- r wrap -->
+	
+	
+	<!-- FOOTER -->
+	<div id="f">
+		<div class="container">
+			<div class="row centered">
+				<a href="#"><i class="fa fa-twitter"></i></a><a href="#"><i class="fa fa-facebook"></i></a><a href="#"><i class="fa fa-dribbble"></i></a>
+		
+			</div><!-- row -->
+		</div><!-- container -->
+	</div><!-- Footer -->
+
+
+	<!-- MODAL FOR CONTACT -->
+	<!-- Modal -->
+	<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+	  <div class="modal-dialog">
+	    <div class="modal-content">
+	      <div class="modal-header">
+	        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+	        <h4 class="modal-title" id="myModalLabel">contact us</h4>
+	      </div>
+	      <div class="modal-body">
+		        <div class="row centered">
+		        	<p>We are available 24/7, so don't hesitate to contact us.</p>
+		        	<p>
+		        		Somestreet Ave, 987<br/>
+						London, UK.<br/>
+						+44 8948-4343<br/>
+						hi@blacktie.co
+		        	</p>
+		        	<div id="mapwrap">
+		<iframe height="300" width="100%" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="https://www.google.es/maps?t=m&amp;ie=UTF8&amp;ll=52.752693,22.791016&amp;spn=67.34552,156.972656&amp;z=2&amp;output=embed"></iframe>
+					</div>	
+		        </div>
+	      </div>
+	      <div class="modal-footer">
+	        <button type="button" class="btn btn-danger" data-dismiss="modal">Save & Go</button>
+	      </div>
+	    </div><!-- /.modal-content -->
+	  </div><!-- /.modal-dialog -->
+	</div><!-- /.modal -->
+
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
+    <script src="assets/js/bootstrap.min.js"></script>
+  </body>
 </html>
