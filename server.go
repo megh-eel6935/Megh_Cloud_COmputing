@@ -5,6 +5,7 @@ import (
 	"code.google.com/p/go.crypto/bcrypt"
 	"encoding/json"
 	"fmt"
+	"github.com/alexjlockwood/gcm"
 	"github.com/beatrichartz/martini-sockets"
 	"github.com/go-martini/martini"
 	_ "github.com/go-sql-driver/mysql"
@@ -134,6 +135,7 @@ type GroupdataJson struct {
 	Username  string `json:"username"`
 	Timestamp string `json:"timestamp"`
 }
+
 type UserDataJson struct {
 	Content      string `json:"content"`
 	Content_type string `json:"content_type"`
@@ -149,13 +151,27 @@ type numd struct {
 }
 
 type groupitems []struct {
+	Timestamp    numd
 	Username     strd
 	Group_name   strd
-	Timestamp    numd
 	Group_id     strd
 	Usergroup_id strd
 	Group_admin  strd
 }
+
+type AndroidUserDetailsItem struct {
+	Username        strd
+	Timestamp       numd
+	Publickey       strd
+	Displayname     strd
+	Password        strd
+	Registration_id strd
+}
+
+type AndroidUserDetails struct {
+	Item AndroidUserDetailsItem
+}
+
 type groupuseritems []struct {
 	Group_id    strd
 	Username    strd
@@ -293,7 +309,6 @@ func main() {
 	m.Use(sessions.Sessions("megh", store))
 
 	m.Get("/", func(r render.Render) {
-
 		r.HTML(200, "index", nil)
 
 	})
@@ -391,14 +406,15 @@ func main() {
 				body1, code1, err1 := put1.EndpointReq()
 
 				if err1 != nil || code != http.StatusOK {
+
 					fmt.Printf("put failed %d %v %s\n", code1, err1, body1)
 					r.JSON(200, map[string]interface{}{"status": "Registration failed .Try again"})
 
 				} else {
 
 					setSession(signin.Email, publickey["S"].(string), response)
-					r.JSON(200, map[string]interface{}{"status": "Success"})
 
+					r.JSON(200, map[string]interface{}{"status": "Success"})
 				}
 
 			}
@@ -552,6 +568,7 @@ func main() {
 		if present {
 			if insertToGroupData(params["id"], username, msg.Message, "text") {
 				r.JSON(200, map[string]interface{}{"status": "success"})
+				go sendNotificationsToAndroid(params["id"], username, msg.Message, "text")
 			} else {
 				r.JSON(200, map[string]interface{}{"status": "failure"})
 			}
@@ -591,6 +608,7 @@ func main() {
 			r.HTML(200, "user", nil)
 			if insertToGroupData(params["id"], username, msg.Message, "url") {
 				r.JSON(200, map[string]interface{}{"status": "success"})
+				go sendNotificationsToAndroid(params["id"], username, msg.Message, "url")
 			} else {
 				r.JSON(200, map[string]interface{}{"status": "failure"})
 			}
@@ -807,6 +825,59 @@ func main() {
 
 }
 
+func sendNotificationsToAndroid(groupid string, username string, content string, content_type string) {
+
+	fmt.Println("calling notification to android")
+
+	usersingroup, _ := getUsersInGroupList(groupid)
+	fmt.Println("got the follwing users from list ", usersingroup)
+	var regIDs []string
+	for _, elem := range usersingroup {
+
+		// You can increase efficiency here in future
+
+		fmt.Println("Username in forloop ", elem.Username)
+		get1 := get.NewGetItem()
+		get1.TableName = "users"
+		get1.Key["username"] = &attributevalue.AttributeValue{S: elem.Username + "android"}
+		body, code, err := get1.EndpointReq()
+
+		if err != nil || code != http.StatusOK {
+			fmt.Println("error at 1st get request")
+			//return 0
+		} else {
+			var res AndroidUserDetails
+			err3 := json.Unmarshal([]byte(body), &res)
+			fmt.Println("Body for each get request", body)
+			fmt.Println("res for each get request", res)
+			if err3 != nil {
+				//	return 0
+			}
+
+			if res.Item.Registration_id.S != "" {
+				regIDs = append(regIDs, res.Item.Registration_id.S)
+			}
+			//regIDs := []string{"APA91bHdXL9Huqm23usTUR0w_xcdliT_jcNh_fA8zeSEa3f4KH7LLMjN_EORCMGH9VPimWyQ8azF2_1TFjbcq-NEtqW0FD6pLrjgfSA2mgHTX8SgSUw3-1m0MIjY8VidvKOdT-fIW_HMcj4SuI43r33pHewTvbvnqj_tlHkphKtokG5ymSUxxgk"}
+
+		}
+	}
+	data := map[string]interface{}{"content_type": content_type, "content": content}
+	msg := gcm.NewMessage(data, regIDs...)
+
+	// Create a Sender to send the message.
+	sender := &gcm.Sender{ApiKey: "AIzaSyCq83QZc-yl8pblJJOKtPRQ-rfbvrwg6ms"}
+
+	// Send the message and receive the response after at most two retries.
+	response, err := sender.Send(msg, 2)
+	if err != nil {
+		fmt.Println("Failed to send message:", err)
+		return
+	}
+
+	fmt.Println(response)
+
+}
+
 func deleteuserdata(username string, timestamp string) bool {
 
 	// DELETE AN ITEM
@@ -842,7 +913,7 @@ func deletegroupdata(username string, timestamp string, groupid string) int {
 		if err3 != nil {
 			return 0
 		}
-
+		fmt.Println("usenmaesi ", res.Item.Username.S, " ", username)
 		if res.Item.Username.S == username {
 			// DELETE AN ITEM
 			del_item1 := delete_item.NewDeleteItem()
@@ -1198,6 +1269,7 @@ func insertToUserData(username string, content string, ctype string) bool {
 		return false
 	} else {
 		return true
+
 	}
 
 }
@@ -1278,6 +1350,7 @@ func groupUploadHandler(w http.ResponseWriter, r *http.Request, rend render.Rend
 	present := validateUsername(userName)
 	if present {
 		if insertToGroupData(params["id"], userName, header.Filename, "file") {
+			go sendNotificationsToAndroid(params["id"], userName, header.Filename, "file")
 			rend.JSON(200, map[string]interface{}{"status": "success"})
 		} else {
 			rend.JSON(200, map[string]interface{}{"status": "failure"})
@@ -1304,8 +1377,16 @@ func setSession(userName string, publickey string, response http.ResponseWriter)
 			Value: publickey,
 			Path:  "/",
 		}
+
+		cookie3 := &http.Cookie{
+			Name:  "username",
+			Value: userName,
+			Path:  "/",
+		}
+
 		http.SetCookie(response, cookie)
 		http.SetCookie(response, cookie2)
+		http.SetCookie(response, cookie3)
 	}
 }
 
@@ -1316,7 +1397,22 @@ func clearSession(response http.ResponseWriter) {
 		Path:   "/",
 		MaxAge: -1,
 	}
+	cookie2 := &http.Cookie{
+		Name:   "publickey",
+		Value:  "",
+		Path:   "/",
+		MaxAge: -1,
+	}
+	cookie3 := &http.Cookie{
+		Name:   "username",
+		Value:  "",
+		Path:   "/",
+		MaxAge: -1,
+	}
 	http.SetCookie(response, cookie)
+	http.SetCookie(response, cookie2)
+	http.SetCookie(response, cookie3)
+
 }
 
 func getUserName(request *http.Request) (userName string) {
