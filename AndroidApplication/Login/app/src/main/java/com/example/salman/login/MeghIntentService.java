@@ -1,7 +1,4 @@
-
 package com.example.salman.login;
-
-
 
 import android.app.IntentService;
 import android.app.NotificationManager;
@@ -17,10 +14,6 @@ import com.google.android.gms.gcm.GoogleCloudMessaging;
 
 /**
  * Created by Ahmad Salman Saqib on 11/25/14.
- */
-
-
-/**
  * This {@code IntentService} does the actual handling of the GCM message.
  * {@code GcmBroadcastReceiver} (a {@code WakefulBroadcastReceiver}) holds a
  * partial wake lock for this service while the service does its work. When the
@@ -31,7 +24,7 @@ import com.google.android.gms.gcm.GoogleCloudMessaging;
 public class MeghIntentService extends IntentService {
     public static final int NOTIFICATION_ID = 1;
     private NotificationManager mNotificationManager;
-    NotificationCompat.Builder builder;
+    //NotificationCompat.Builder builder;
 
     public MeghIntentService() {
         super("MeghIntentService");
@@ -42,18 +35,16 @@ public class MeghIntentService extends IntentService {
     protected void onHandleIntent(Intent intent) {
         Bundle extras = intent.getExtras();
         GoogleCloudMessaging gcm = GoogleCloudMessaging.getInstance(this);
-        // The getMessageType() intent parameter must be the intent you received
-        // in your BroadcastReceiver.
+        // The getMessageType() intent parameter must be the intent we received
+        // in our BroadcastReceiver.
         String messageType = gcm.getMessageType(intent);
 
         if (!extras.isEmpty()) {  // has effect of unparcelling Bundle
-
-/*
+            /*
              * Filter messages based on message type. Since it is likely that GCM will be
-             * extended in the future with new message types, just ignore any message types you're
-             * not interested in, or that you don't recognize.
+             * extended in the future with new message types, we just ignore any message types we're
+             * not interested in, or that we don't recognize.
              */
-
             if (GoogleCloudMessaging.MESSAGE_TYPE_SEND_ERROR.equals(messageType)) {
                 sendNotification("Send error: " + extras.toString());
             } else if (GoogleCloudMessaging.MESSAGE_TYPE_DELETED.equals(messageType)) {
@@ -67,6 +58,7 @@ public class MeghIntentService extends IntentService {
                     try {
                         Thread.sleep(5000);
                     } catch (InterruptedException e) {
+                        e.printStackTrace();
                     }
                 }
                 Log.i(TAG, "Completed work @ " + SystemClock.elapsedRealtime());
@@ -80,8 +72,8 @@ public class MeghIntentService extends IntentService {
     }
 
     // Put the message into a notification and post it.
-    // This is just one simple example of what you might choose to do with
-    // a GCM message.
+    // This is just a simple placeholder for what we might
+    // choose to do with a GCM message in the future.
     private void sendNotification(String msg) {
         mNotificationManager = (NotificationManager)
                 this.getSystemService(Context.NOTIFICATION_SERVICE);

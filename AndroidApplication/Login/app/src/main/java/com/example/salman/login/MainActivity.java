@@ -26,7 +26,6 @@ import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 
 import java.io.IOException;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class MainActivity extends ActionBarActivity {
 
@@ -37,31 +36,24 @@ public class MainActivity extends ActionBarActivity {
     EditText login_email;
     EditText login_password;
 
-
-
-    /////////////////////////////////////////////////////////////////////////////////////
-
-    public static final String EXTRA_MESSAGE = "message";
-    public static final String PROPERTY_REG_ID = "registration_id";
-    private static final String PROPERTY_APP_VERSION = "appVersion";
-    private static final int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
-
-
-    String SENDER_ID = "492901091946";
-    TextView mDisplay;
-    GoogleCloudMessaging gcm;
-    AtomicInteger msgId = new AtomicInteger();
-    SharedPreferences prefs;
-    Context context;
-
-    String regid;
-
-
-    static final String TAG = "GCM Megh";
-
-
-
-    /////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////||
+    //public static final String EXTRA_MESSAGE = "message";//                           ||
+    public static final String PROPERTY_REG_ID = "registration_id";//                   ||
+    private static final String PROPERTY_APP_VERSION = "appVersion";//                  ||
+    private static final int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;//                 ||
+    //                                                                                  ||
+    //String SENDER_ID = "492901091946";                                                ||
+    //AtomicInteger msgId = new AtomicInteger();//                                      ||
+    //SharedPreferences prefs;//                                                        ||
+    String SENDER_ID = "219538562695";//                                                ||
+    //                                                                                  ||
+    GoogleCloudMessaging gcm;//                                                         ||
+    Context context;//                                                                  ||
+    //                                                                                  ||
+    String regID;//                                                                     ||
+    //                                                                                  ||
+    static final String TAG = "GCM Megh";//                                             ||
+    ////////////////////////////////////////////////////////////////////////////////////||
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -85,11 +77,12 @@ public class MainActivity extends ActionBarActivity {
 
         if (checkPlayServices()) {
             gcm = GoogleCloudMessaging.getInstance(this);
-            regid = getRegistrationId(context);
+            regID = getRegistrationId(context);
 
-            Log.v("RegistrationIDLog1","AAAAA:__"+regid + "__:AAAAA");
+            //TODO: remove log
+            Log.v("RegistrationIDLog1","AAAAA:__"+ regID + "__:AAAAA");
 
-            if (regid.isEmpty()) {
+            if (regID.isEmpty()) {
                 Log.i(TAG, "register in background commented out");
 
                 RegisterInBackground registerInBackground = new RegisterInBackground();
@@ -103,30 +96,32 @@ public class MainActivity extends ActionBarActivity {
         login_button.setOnClickListener(new Login());
     }
 
-    private class Login implements OnClickListener {
-
-        @Override
-        public void onClick(View v) {
-            if (isOnline()) {
-                requestLogin("http://104.131.126.89/mobilelogin");
-            } else {
-                Toast.makeText(v.getContext(),
-                        "Network Not Available.\nCheck Network Connection",
-                        Toast.LENGTH_LONG).show();
-            }
-        }
-
-        private void requestLogin(String uri) {
-            LoginRequestHandler LoginButton_clicked = new LoginRequestHandler();
-            RequestPackage requestPackage = new RequestPackage();
-            requestPackage.setUri(uri);
-            requestPackage.setParam("email", login_email.getText().toString());
-            requestPackage.setParam("password", login_password.getText().toString());
-            Log.v("RegistrationIDLog2",regid);
-            requestPackage.setParam("registration_id", regid);
-            LoginButton_clicked.execute(requestPackage);
-        }
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putString("regID", regID);
     }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        regID = savedInstanceState.getString("regID");
+    }
+
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Check device for Play Services APK.
+        checkPlayServices();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+    }
+
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -151,9 +146,42 @@ public class MainActivity extends ActionBarActivity {
     }
 
 
+    private class Login implements OnClickListener {
+
+        @Override
+        public void onClick(View v) {
+            if (isOnline()) {
+                requestLogin("http://104.131.126.89/mobilelogin");
+                //TODO: sender code
+                //sendGCMmsg("Hi its me....BLLAAARRRGGHH!!!");
+            } else {
+                Toast.makeText(v.getContext(),
+                        "Network Not Available.\nCheck Network Connection",
+                        Toast.LENGTH_LONG).show();
+            }
+        }
+
+        private void requestLogin(String uri) {
+            LoginRequestHandler LoginButton_clicked = new LoginRequestHandler();
+            RequestPackage requestPackage = new RequestPackage();
+            requestPackage.setUri(uri);
+            requestPackage.setParam("email", login_email.getText().toString());
+            requestPackage.setParam("password", login_password.getText().toString());
+            Log.v("RegistrationIDLog2", regID);
+            requestPackage.setParam("registration_id", regID);
+            LoginButton_clicked.execute(requestPackage);
+        }
+
+        //TODO: sender code
+        /*private void sendGCMmsg(String msg){
+            GCMmsgSender GCMmsg = new GCMmsgSender();
+            GCMmsg.execute(msg);
+        }*/
+    }
+
     private class LoginRequestHandler extends AsyncTask<RequestPackage, String, String> {
 
-        private final String LOG_TAG = MainActivity.class.getSimpleName();
+        //private final String LOG_TAG = MainActivity.class.getSimpleName();
 
         @Override
         protected void onPreExecute() {
@@ -182,7 +210,6 @@ public class MainActivity extends ActionBarActivity {
         protected void onPostExecute(String s) {
             if (s == null) {
                 Toast.makeText(MainActivity.this, "Cannot connect to web server", Toast.LENGTH_LONG).show();
-                return;
             }
             else {
                 temp_output.append(s+"\n");
@@ -190,15 +217,36 @@ public class MainActivity extends ActionBarActivity {
         }
     }
 
+    //TODO: sender code
+    /*private class GCMmsgSender extends AsyncTask<String, Void, String> {
+
+        @Override
+        protected String doInBackground(String... params) {
+            String msg = "";
+            try {
+                Bundle data = new Bundle();
+                data.putString("my_message", params[0]);
+                data.putString("my_action", "com.example.salman.login");
+                String id = Integer.toString(msgId.incrementAndGet());
+                gcm.send(SENDER_ID + "@gcm.googleapis.com", id, data);
+                msg = "Sent message";
+            } catch (IOException ex) {
+                msg = "Error :" + ex.getMessage();
+            }
+            return msg;
+        }
+
+        @Override
+        protected void onPostExecute(String msg) {
+            temp_output.append(msg + "\n");
+        }
+    }*/
+
 
     protected boolean isOnline() {
         ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo netInfo = cm.getActiveNetworkInfo();
-        if (netInfo != null && netInfo.isConnectedOrConnecting()) {
-            return true;
-        } else {
-            return false;
-        }
+        return netInfo != null && netInfo.isConnectedOrConnecting();
     }
 
     private boolean checkPlayServices() {
@@ -248,10 +296,10 @@ public class MainActivity extends ActionBarActivity {
      * @return Application's {@code SharedPreferences}.
      */
     private SharedPreferences getGCMPreferences(Context context) {
-        // This sample app persists the registration ID in shared preferences, but
-        // how you store the regID in your app is up to you.
-        return getSharedPreferences(MainActivity.class.getSimpleName(),
-                Context.MODE_PRIVATE);
+        /*TODO: This persists the registration ID in shared preferences, but...
+          TODO: ...we need to later change how we store the regID in out app.*/
+        return getSharedPreferences(MainActivity.class.getSimpleName(),Context.MODE_PRIVATE);
+        //TODO: might need to change Context to context
     }
 
     /**
@@ -273,39 +321,32 @@ public class MainActivity extends ActionBarActivity {
      * Stores the registration ID and app versionCode in the application's
      * shared preferences.
      */
-    //TODO: registerInBackground implementation
-
-
     private class RegisterInBackground extends AsyncTask<Void,Void,String> {
 
         @Override
         protected String doInBackground(Void... params) {
-            String msg = "";
+            String msg; //= "";TODO: Might need to initialize msg with empty string
             try {
                 if (gcm == null) {
                     gcm = GoogleCloudMessaging.getInstance(context);
                 }
-                regid = gcm.register(SENDER_ID);
-                msg = "Device registered, registration ID=" + regid;
+                regID = gcm.register(SENDER_ID);
+                msg = "Device registered, registration ID=" + regID;
 
-                // You should send the registration ID to your server over HTTP,
-                // so it can use GCM/HTTP or CCS to send messages to your app.
-                // The request to your server should be authenticated if your app
+                // We should send the registration ID to our server over HTTP,
+                // so it can use GCM/HTTP or CCS to send messages to our app.
+                // The request to yur server should be authenticated since our app
                 // is using accounts.
 
                 //TODO:take care of the next line (sendRegistrationIdToBackend())
                 //sendRegistrationIdToBackend();
 
-                // For this demo: we don't need to send it because the device
-                // will send upstream messages to a server that echo back the
-                // message using the 'from' address in the message.
-
                 // Persist the regID - no need to register again.
-                storeRegistrationId(context, regid);
+                storeRegistrationId(context, regID);
             } catch (IOException ex) {
                 msg = "Error :" + ex.getMessage();
-                // If there is an error, don't just keep trying to register.
-                // Require the user to click a button again, or perform
+                // If there is an error, we can't just keep trying to register.
+                // We need to require the user to click a button again, or perform
                 // exponential back-off.
             }
             return msg;
@@ -313,7 +354,7 @@ public class MainActivity extends ActionBarActivity {
 
         @Override
         protected void onPostExecute(String msg) {
-            mDisplay.append(msg + "\n");
+            temp_output.append(msg + "\n");
         }
     }
 

@@ -27,7 +27,7 @@ public class UserFunctions {
         HttpURLConnection con = (HttpURLConnection) url.openConnection();
         con.setRequestMethod("POST");
 
-        String urlParameters = "email=" + email + "&password=" + password + "&registration_id=" + registration_id;
+        String urlParameters = "email=" + email + "&password=" + password;// + "&registration_id=" + registration_id;
 
         con.setDoOutput(true);
         DataOutputStream wr = new DataOutputStream(con.getOutputStream());

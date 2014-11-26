@@ -27,17 +27,17 @@
             </intent-filter>
         </activity>
 
-        <!--<receiver
+        <receiver
             android:name=".MeghBroadcastReceiver"
             android:permission="com.google.android.c2dm.permission.SEND" >
             <intent-filter>
                 <action android:name="com.google.android.c2dm.intent.RECEIVE" />
-                <action android:name="com.google.android.c2dm.intent.REGISTRATION" />
+                <!--
+                <action android:name="com.google.android.c2dm.intent.REGISTRATION"/> -->
                 <category android:name="com.example.salman.login" />
             </intent-filter>
         </receiver>
         <service android:name="com.example.salman.login.MeghIntentService" />
--->
     </application>
 
 </manifest>

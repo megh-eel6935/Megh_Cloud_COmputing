@@ -32,7 +32,8 @@
         android:text="Login"
         android:id="@+id/login_login_button"
         android:layout_below="@+id/login_password_editText"
-        android:layout_centerHorizontal="true"/>
+        android:layout_centerHorizontal="true"
+        android:la/>
 
     <Button
         android:layout_width="wrap_content"
