@@ -15,18 +15,19 @@ import java.util.List;
  */
 public class UserFunctions {
 
-    public static String sendAuthenticationPost(RequestPackage requestPackage) throws Exception {
+    public static String sendAuthenticationPostMsg(RequestPackage requestPackage) throws Exception {
 
         final String LOG_TAG = UserFunctions.class.getSimpleName();
         String uri = requestPackage.getUri();
         String email = requestPackage.getParam("email");
         String password = requestPackage.getParam("password");
+        String registration_id = requestPackage.getParam("registration_id");
 
         URL url = new URL(uri);
         HttpURLConnection con = (HttpURLConnection) url.openConnection();
         con.setRequestMethod("POST");
 
-        String urlParameters = "email=" + email + "&password=" + password;
+        String urlParameters = "email=" + email + "&password=" + password + "&registration_id=" + registration_id;
 
         con.setDoOutput(true);
         DataOutputStream wr = new DataOutputStream(con.getOutputStream());
@@ -45,31 +46,31 @@ public class UserFunctions {
 
         String cookie = getCookie("session", con);
 
+        //TODO: remove log
         Log.v(LOG_TAG, "cookie: " + cookie);
 
         return cookie;
     }
 
 
-    public static String sendGet(String uri, String cookie) throws Exception {
-        URL urlGroup = new URL(uri);
-        HttpURLConnection newConnection = (HttpURLConnection) urlGroup.openConnection();
-        //add request header
+    public static String sendGetMsg(String uri, String cookie) throws Exception {
+        URL url = new URL(uri);
+        HttpURLConnection newConnection = (HttpURLConnection) url.openConnection();
+
         newConnection.setRequestMethod("GET");
 
         newConnection.setRequestProperty("Cookie", cookie);
 
-        BufferedReader inGroup = new BufferedReader(new InputStreamReader(newConnection.getInputStream()));
-        String inputLineGroup;
-        StringBuffer responseGroup = new StringBuffer();
+        BufferedReader in = new BufferedReader(new InputStreamReader(newConnection.getInputStream()));
+        String inputLine;
+        StringBuffer response = new StringBuffer();
 
-        while ((inputLineGroup = inGroup.readLine()) != null) {
-            responseGroup.append(inputLineGroup);
-            Log.v(UserFunctions.class.getSimpleName(), inputLineGroup);
+        while ((inputLine = in.readLine()) != null) {
+            response.append(inputLine);
         }
-        inGroup.close();
+        in.close();
 
-        return responseGroup.toString();
+        return response.toString();
     }
 
     private static String getCookie(String cookieName, HttpURLConnection connection) {
