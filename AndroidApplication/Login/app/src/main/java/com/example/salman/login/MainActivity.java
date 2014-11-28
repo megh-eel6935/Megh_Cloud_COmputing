@@ -226,32 +226,6 @@ public class MainActivity extends ActionBarActivity {
         }
     }
 
-    //TODO: sender code
-    /*private class GCMmsgSender extends AsyncTask<String, Void, String> {
-
-        @Override
-        protected String doInBackground(String... params) {
-            String msg = "";
-            try {
-                Bundle data = new Bundle();
-                data.putString("my_message", params[0]);
-                data.putString("my_action", "com.example.salman.login");
-                String id = Integer.toString(msgId.incrementAndGet());
-                gcm.send(SENDER_ID + "@gcm.googleapis.com", id, data);
-                msg = "Sent message";
-            } catch (IOException ex) {
-                msg = "Error :" + ex.getMessage();
-            }
-            return msg;
-        }
-
-        @Override
-        protected void onPostExecute(String msg) {
-            temp_output.append(msg + "\n");
-        }
-    }*/
-
-
     protected boolean isOnline() {
         ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo netInfo = cm.getActiveNetworkInfo();
@@ -273,15 +247,6 @@ public class MainActivity extends ActionBarActivity {
         return true;
     }
 
-    //TODO: remove comments
-    /**
-     * Gets the current registration ID for application on GCM service.
-     * <p>
-     * If result is empty, the app needs to register.
-     *
-     * @return registration ID, or empty string if there is no existing
-     *         registration ID.
-     */
     private String getRegistrationId(Context context) {
         final SharedPreferences prefs = getGCMPreferences(context);
         String registrationId = prefs.getString(PROPERTY_REG_ID, "");
@@ -301,9 +266,7 @@ public class MainActivity extends ActionBarActivity {
         return registrationId;
     }
 
-    /**
-     * @return Application's {@code SharedPreferences}.
-     */
+
     private SharedPreferences getGCMPreferences(Context context) {
         /*TODO: This persists the registration ID in shared preferences, but...
           TODO: ...we need to later change how we store the regID in out app.*/
@@ -311,9 +274,7 @@ public class MainActivity extends ActionBarActivity {
         //TODO: might need to change Context to context
     }
 
-    /**
-     * @return Application's version code from the {@code PackageManager}.
-     */
+
     private static int getAppVersion(Context context) {
         try {
             PackageInfo packageInfo = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
@@ -324,12 +285,7 @@ public class MainActivity extends ActionBarActivity {
         }
     }
 
-    /**
-     * Registers the application with GCM servers asynchronously.
-     * <p>
-     * Stores the registration ID and app versionCode in the application's
-     * shared preferences.
-     */
+
     private class RegisterInBackground extends AsyncTask<Void,Void,String> {
 
         @Override
@@ -367,13 +323,7 @@ public class MainActivity extends ActionBarActivity {
         }
     }
 
-    /**
-     * Stores the registration ID and app versionCode in the application's
-     * {@code SharedPreferences}.
-     *
-     * @param context application's context.
-     * @param regId registration ID
-     */
+
     private void storeRegistrationId(Context context, String regId) {
         final SharedPreferences prefs = getGCMPreferences(context);
         int appVersion = getAppVersion(context);

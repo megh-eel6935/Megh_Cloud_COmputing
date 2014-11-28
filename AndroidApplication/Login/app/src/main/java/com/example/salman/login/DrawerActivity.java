@@ -1,5 +1,6 @@
 package com.example.salman.login;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.os.AsyncTask;
@@ -12,11 +13,14 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import java.util.List;
 
 /**
  * Created by salman on 11/27/14.
@@ -28,12 +32,15 @@ public class DrawerActivity extends ActionBarActivity {
     private ListView drawerRightListView;
 
     private ActionBarDrawerToggle drawerLeftListener;
-    private MyAdapter myAdapter;
+
+    private AdapterLeftDrawerList adapterLeftDrawerList;
+    private AdapterMessage adapterMessage;
+    private AdapterGroups adapterGroups;
 
     private TextView testTextView;
 
     @Override
-    protected  void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_drawer);
 
@@ -45,13 +52,13 @@ public class DrawerActivity extends ActionBarActivity {
         testTextView = (TextView) findViewById(R.id.drawer_insideTextView);
         /////////////////
 
-        myAdapter = new MyAdapter(this);
-        drawerLeftListView.setAdapter(myAdapter);
+        adapterLeftDrawerList = new AdapterLeftDrawerList(this);
+        drawerLeftListView.setAdapter(adapterLeftDrawerList);
 
         drawerLeftListView.setOnItemClickListener(new ItemClickListener());
 
         drawerLeftListener = new ActionBarDrawerToggle(this, drawerLayout,
-                R.string.drawer_open, R.string.drawer_close){
+                R.string.drawer_open, R.string.drawer_close) {
 
             @Override
             public void onDrawerOpened(View drawerView) {
@@ -73,7 +80,7 @@ public class DrawerActivity extends ActionBarActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        if (drawerLeftListener.onOptionsItemSelected(item)){
+        if (drawerLeftListener.onOptionsItemSelected(item)) {
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -91,14 +98,14 @@ public class DrawerActivity extends ActionBarActivity {
         drawerLeftListener.syncState();
     }
 
-    private class ItemClickListener implements AdapterView.OnItemClickListener{
+    private class ItemClickListener implements AdapterView.OnItemClickListener {
 
         @Override
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 
             String content = null;
 
-            Toast.makeText(DrawerActivity.this, myAdapter.leftDrawerOptions[position] + " was selected",
+            Toast.makeText(DrawerActivity.this, adapterLeftDrawerList.leftDrawerOptions[position] + " was selected",
                     Toast.LENGTH_SHORT).show();
 
             BTGetSelectedItemFunctionalityHandler itemClicked = new BTGetSelectedItemFunctionalityHandler();
@@ -108,13 +115,18 @@ public class DrawerActivity extends ActionBarActivity {
             drawerLayout.closeDrawer(drawerLeftListView);
         }
 
-        private class BTGetSelectedItemFunctionalityHandler extends AsyncTask<Integer, String, String> {
+        private class BTGetSelectedItemFunctionalityHandler extends AsyncTask<Integer, String, SelectedContent> {
 
             @Override
-            protected String doInBackground(Integer... params) {
+            protected SelectedContent doInBackground(Integer... params) {
                 try {
                     String content = UserFunctions.getSelectedListItemFunctionality(params[0]);
-                    return content;
+                    int position = params[0];
+
+                    SelectedContent selectedContent = new SelectedContent();
+                    selectedContent.setContent(content);
+                    selectedContent.setPosition(position);
+                    return selectedContent;
 
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -123,15 +135,36 @@ public class DrawerActivity extends ActionBarActivity {
             }
 
             @Override
-            protected void onPostExecute(String s) {
-                testTextView.append(s);
+            protected void onPostExecute(SelectedContent s) {
+                ListView drawer_baseLayout_listView = (ListView) findViewById(R.id.drawer_baseLayout_listView);
+                if (s.getPosition() == 0) {
+                    List<Message> messageList = JsonCustomParser.readAndParseJSONMessages(s.getContent());
+                    adapterMessage = new AdapterMessage(DrawerActivity.this,
+                            R.layout.internallayout_drawer_base_item, messageList);
+
+                    drawer_baseLayout_listView.setAdapter(adapterMessage);
+
+                } else if (s.getPosition() == 1) {
+                    List<Message> messageList = JsonCustomParser.readAndParseJSONMessages(s.getContent());
+                    adapterMessage = new AdapterMessage(DrawerActivity.this,
+                            R.layout.internallayout_drawer_base_item, messageList);
+
+                    drawer_baseLayout_listView.setAdapter(adapterMessage);
+
+                } else if (s.getPosition() == 2){
+                    List<Groups> groupsList = JsonCustomParser.readAndParseJSONGroups(s.getContent());
+                    adapterGroups = new AdapterGroups(DrawerActivity.this,
+                            R.layout.internallayout_drawer_base_item, groupsList);
+
+                    drawer_baseLayout_listView.setAdapter(adapterGroups);
+                }
             }
         }
     }
 
     public void selectMethod(int position) {
         drawerLeftListView.setItemChecked(position, true);
-        setTitle(myAdapter.leftDrawerOptions[position]);
+        setTitle(adapterLeftDrawerList.leftDrawerOptions[position]);
     }
 
     public void setTitle(String title) {
@@ -139,14 +172,14 @@ public class DrawerActivity extends ActionBarActivity {
     }
 }
 
-class MyAdapter extends BaseAdapter {
+class AdapterLeftDrawerList extends BaseAdapter {
 
     private Context context;
     String[] leftDrawerOptions;
-    int[] images = {R.drawable.ic_home, R.drawable.ic_people,R.drawable.ic_groups};
+    int[] images = {R.drawable.ic_home, R.drawable.ic_people, R.drawable.ic_groups};
 
 
-    public MyAdapter(Context context){
+    public AdapterLeftDrawerList(Context context) {
         this.context = context;
         leftDrawerOptions = context.getResources().getStringArray(R.array.nav_drawer_left_items);
     }
@@ -169,11 +202,10 @@ class MyAdapter extends BaseAdapter {
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         View row;
-        if (convertView == null){
+        if (convertView == null) {
             LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             row = inflater.inflate(R.layout.internallayout_drawer_listitem, parent, false);
-        }
-        else{
+        } else {
             row = convertView;
         }
         TextView titleTextView = (TextView) row.findViewById(R.id.internalLayout_listItem_title_textView);
@@ -183,5 +215,94 @@ class MyAdapter extends BaseAdapter {
         titleImageView.setImageResource(images[position]);
 
         return row;
+    }
+}
+
+
+class AdapterMessage extends ArrayAdapter<Message> {
+
+    private Context context;
+    private List<Message> messageList;
+
+    public AdapterMessage(Context context, int resource, List<Message> objects) {
+        super(context, resource, objects);
+        this.context = context;
+        this.messageList = objects;
+    }
+
+    public View getView(int position, View convertView, ViewGroup parent) {
+        LayoutInflater inflater =
+                (LayoutInflater) context.getSystemService(Activity.LAYOUT_INFLATER_SERVICE);
+
+        View view = inflater.inflate(R.layout.internallayout_drawer_base_item, parent, false);
+
+        Message msg = messageList.get(position);
+        TextView tv = (TextView) view.findViewById(R.id.internalLayout_baseItem_title_textView);
+        tv.setText(msg.getContent());
+
+
+        ImageView img = (ImageView) view.findViewById(R.id.internalLayout_baseItem_icon_imageView);
+
+        if (msg.getContent_type().equals("text")) {
+            img.setImageResource(R.drawable.ic_message);
+        } else if (msg.getContent_type().equals("file")) {
+            img.setImageResource(R.drawable.ic_file);
+        } else if (msg.getContent_type().equals("url")) {
+            img.setImageResource(R.drawable.ic_url);
+        }
+
+        return view;
+    }
+}
+
+class AdapterGroups extends ArrayAdapter<Groups> {
+
+    private Context context;
+    private List<Groups> groupsList;
+
+    public AdapterGroups(Context context, int resource, List<Groups> objects) {
+        super(context, resource, objects);
+        this.context = context;
+        this.groupsList = objects;
+    }
+
+    public View getView(int position, View convertView, ViewGroup parent) {
+        LayoutInflater inflater =
+                (LayoutInflater) context.getSystemService(Activity.LAYOUT_INFLATER_SERVICE);
+
+        View view = inflater.inflate(R.layout.internallayout_drawer_base_item, parent, false);
+
+        Groups grp = groupsList.get(position);
+        TextView tv = (TextView) view.findViewById(R.id.internalLayout_baseItem_title_textView);
+        tv.setText(grp.getGroup_name());
+
+
+        ImageView img = (ImageView) view.findViewById(R.id.internalLayout_baseItem_icon_imageView);
+
+        img.setImageResource(R.drawable.ic_groups);
+
+        return view;
+
+    }
+}
+
+class SelectedContent {
+    private String content;
+    private int position;
+
+    public int getPosition() {
+        return position;
+    }
+
+    public void setPosition(int position) {
+        this.position = position;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
     }
 }

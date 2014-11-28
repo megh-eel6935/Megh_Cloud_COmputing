@@ -9,12 +9,12 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <ListView
+        <TextView
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:divider="@android:color/transparent"
-            android:dividerHeight="0dp"
-            android:id="@+id/drawer_baseLayout_listView" />
+            android:layout_height="407dp"
+            android:text="Content: \n "
+            android:id="@+id/drawer_insideTextView"
+            android:layout_gravity="center_horizontal|top" />
     </FrameLayout>
 
     <ListView android:id="@+id/drawer_left_slider_listView"

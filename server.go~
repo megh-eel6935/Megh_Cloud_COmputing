@@ -337,7 +337,7 @@ func main() {
 		fmt.Println("body is %s", body)
 		if len(body) <= 2 || err != nil || code != http.StatusOK {
 			fmt.Printf("get failed %d %v %d \n", code, err, len(body))
-			r.HTML(200, "index", "Username does not exist in the database")
+			r.HTML(200, "index", "Username doesot exists in the database")
 		} else {
 			payload := []byte(body)
 			var result map[string]interface{}
@@ -353,7 +353,7 @@ func main() {
 
 			if err2 != nil {
 
-				r.HTML(200, "index", "Email or password is incorrect. Try again")
+				r.HTML(200, "index", "Email or password is incorrect.Try again")
 			} else {
 				setSession(signin.Email, publickey["S"].(string), response)
 				r.HTML(200, "user", signin.Email)
@@ -375,7 +375,7 @@ func main() {
 		fmt.Println("body is %s", body)
 		if len(body) <= 2 || err != nil || code != http.StatusOK {
 			fmt.Printf("get failed %d %v %d \n", code, err, len(body))
-			r.JSON(200, map[string]interface{}{"status": "Username does not exist in the database"})
+			r.JSON(200, map[string]interface{}{"status": "Username doesot exists in the database"})
 		} else {
 			payload := []byte(body)
 			var result map[string]interface{}
@@ -390,7 +390,7 @@ func main() {
 			err2 := bcrypt.CompareHashAndPassword([]byte(password["S"].(string)), []byte(signin.Password))
 
 			if err2 != nil {
-				r.JSON(200, map[string]interface{}{"status": "Email or password is incorrect. Try again"})
+				r.JSON(200, map[string]interface{}{"status": "Email or password is incorrect.Try again"})
 
 			} else {
 
