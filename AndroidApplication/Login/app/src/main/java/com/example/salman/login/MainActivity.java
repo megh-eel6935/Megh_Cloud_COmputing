@@ -1,6 +1,7 @@
 package com.example.salman.login;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -29,28 +30,25 @@ import java.io.IOException;
 
 public class MainActivity extends ActionBarActivity {
 
-    Button login_button;
-    Button register_button;
+    private Button login_button;
+    private Button register_button;
 
     TextView temp_output;
-    EditText login_email;
-    EditText login_password;
+    public static EditText login_email;
+    public static EditText login_password;
 
     ////////////////////////////////////////////////////////////////////////////////////||
     //public static final String EXTRA_MESSAGE = "message";//                           ||
     public static final String PROPERTY_REG_ID = "registration_id";//                   ||
     private static final String PROPERTY_APP_VERSION = "appVersion";//                  ||
     private static final int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;//                 ||
+
+    private String SENDER_ID = "219538562695";//                                        ||
     //                                                                                  ||
-    //String SENDER_ID = "492901091946";                                                ||
-    //AtomicInteger msgId = new AtomicInteger();//                                      ||
-    //SharedPreferences prefs;//                                                        ||
-    String SENDER_ID = "219538562695";//                                                ||
+    private GoogleCloudMessaging gcm;//                                                 ||
+    private Context context;//                                                          ||
     //                                                                                  ||
-    GoogleCloudMessaging gcm;//                                                         ||
-    Context context;//                                                                  ||
-    //                                                                                  ||
-    String regID;//                                                                     ||
+    private String regID;//                                                             ||
     //                                                                                  ||
     static final String TAG = "GCM Megh";//                                             ||
     ////////////////////////////////////////////////////////////////////////////////////||
@@ -152,6 +150,7 @@ public class MainActivity extends ActionBarActivity {
         public void onClick(View v) {
             if (isOnline()) {
                 requestLogin("http://104.131.126.89/mobilelogin");
+
                 //TODO: sender code
                 //sendGCMmsg("Hi its me....BLLAAARRRGGHH!!!");
             } else {
@@ -162,7 +161,7 @@ public class MainActivity extends ActionBarActivity {
         }
 
         private void requestLogin(String uri) {
-            LoginRequestHandler LoginButton_clicked = new LoginRequestHandler();
+            BTRequestLoginHandler LoginButton_clicked = new BTRequestLoginHandler();
             RequestPackage requestPackage = new RequestPackage();
             requestPackage.setUri(uri);
             requestPackage.setParam("email", login_email.getText().toString());
@@ -179,7 +178,7 @@ public class MainActivity extends ActionBarActivity {
         }*/
     }
 
-    private class LoginRequestHandler extends AsyncTask<RequestPackage, String, String> {
+    private class BTRequestLoginHandler extends AsyncTask<RequestPackage, String, Boolean> {
 
         //private final String LOG_TAG = MainActivity.class.getSimpleName();
 
@@ -189,30 +188,40 @@ public class MainActivity extends ActionBarActivity {
         }
 
         @Override
-        protected String doInBackground(RequestPackage... params) {
+        protected Boolean doInBackground(RequestPackage... params) {
             //String temp = params[0]+" : "+params[1];
             //return temp;
             String loginCookie;
             String test; /*TODO: remove this shit*/
 
             try {
-                loginCookie = UserFunctions.sendAuthenticationPostMsg(params[0]);
+                //loginCookie = UserFunctions.sendAuthenticationPostMsg(params[0]);
                 //return loginCookie;
-                test = UserFunctions.sendGetMsg("http://104.131.126.89/getmessages", loginCookie);
-                return test;
+
+                if(UserFunctions.sendAuthenticationPostMsg(params[0])){
+                    return true;
+                }
+                else{
+                    return false;
+                }
+
+                //test = UserFunctions.sendGetMsg("http://104.131.126.89/getmessages", loginCookie);
+                //return test;
             } catch (Exception e) {
                 e.printStackTrace();
-                return null;
+                return false;
             }
         }
 
         @Override
-        protected void onPostExecute(String s) {
-            if (s == null) {
+        protected void onPostExecute(Boolean s) {
+            if (s == false) {
                 Toast.makeText(MainActivity.this, "Cannot connect to web server", Toast.LENGTH_LONG).show();
             }
             else {
                 temp_output.append(s+"\n");
+                Intent goToHomepage = new Intent(getApplicationContext(), DrawerActivity.class);
+                startActivity(goToHomepage);
             }
         }
     }

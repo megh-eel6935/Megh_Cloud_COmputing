@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.v4.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/drawer_activityID"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <FrameLayout
+        android:id="@+id/drawer_baseLayout_frameLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="407dp"
+            android:text="Content: \n "
+            android:id="@+id/drawer_insideTextView"
+            android:layout_gravity="center_horizontal|top" />
+    </FrameLayout>
+
+    <ListView android:id="@+id/drawer_left_slider_listView"
+        android:layout_width="240dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        android:choiceMode="singleChoice"
+        android:divider="@android:color/transparent"
+        android:dividerHeight="0dp"
+        android:background="#111"
+        android:entries="@array/nav_drawer_left_items"/>
+
+    <ListView android:id="@+id/drawer_right_slider_listView"
+        android:layout_width="240dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="end"
+        android:choiceMode="singleChoice"
+        android:divider="@android:color/transparent"
+        android:dividerHeight="0dp"
+        android:background="#111"
+        android:entries="@array/nav_drawer_right_items"/>
+
+
+</android.support.v4.widget.DrawerLayout>
