@@ -309,18 +309,41 @@ func main() {
 	m.Use(sessions.Sessions("megh", store))
 
 	m.Get("/", func(r render.Render) {
+
 		r.HTML(200, "index", nil)
 
 	})
 
-	m.Get("/elements", func(r render.Render, request *http.Request) {
+	m.Get("/home", func(r render.Render, request *http.Request) {
 
 		userName := getUserName(request)
 
 		if userName == "" {
-			r.HTML(200, "login", "Session Expired .Please Sign in again")
+			r.HTML(200, "index", "Session Expired .Please Sign in again")
 		} else {
 			r.HTML(200, "user", userName)
+		}
+	})
+
+	m.Get("/chromehome", func(r render.Render, request *http.Request) {
+
+		userName := getUserName(request)
+
+		if userName == "" {
+			r.HTML(200, "chromeindex", "Session Expired .Please Sign in again")
+		} else {
+			r.HTML(200, "chromeuser", userName)
+		}
+	})
+
+	m.Get("/chromefileupload", func(r render.Render, request *http.Request) {
+
+		userName := getUserName(request)
+
+		if userName == "" {
+			r.JSON(200, map[string]interface{}{"status": "Seesion failed . Login again"})
+		} else {
+			r.HTML(200, "chromefileupload", "click to upload files")
 		}
 	})
 
@@ -337,7 +360,7 @@ func main() {
 		fmt.Println("body is %s", body)
 		if len(body) <= 2 || err != nil || code != http.StatusOK {
 			fmt.Printf("get failed %d %v %d \n", code, err, len(body))
-			r.HTML(200, "index", "Username does not exist in the database")
+			r.HTML(200, "index", "Username doesot exists in the database")
 		} else {
 			payload := []byte(body)
 			var result map[string]interface{}
@@ -353,10 +376,47 @@ func main() {
 
 			if err2 != nil {
 
-				r.HTML(200, "index", "Email or password is incorrect. Try again")
+				r.HTML(200, "index", "Email or password is incorrect.Try again")
 			} else {
 				setSession(signin.Email, publickey["S"].(string), response)
 				r.HTML(200, "user", signin.Email)
+			}
+		}
+	})
+
+	m.Post("/chromelogin", binding.Form(Signin{}), func(signin Signin, r render.Render, response http.ResponseWriter, s sessions.Session) {
+
+		//err := db.QueryRow("select id,password from username where username='" + signin.Email + "'").Scan(&id,&hashedPassword)
+		get1 := get.NewGetItem()
+		get1.TableName = "users"
+		fmt.Println("entir form is ", signin)
+		fmt.Println("username is ", signin.Email)
+		get1.Key["username"] = &attributevalue.AttributeValue{S: signin.Email}
+
+		body, code, err := get1.EndpointReq()
+		fmt.Println("body is %s", body)
+		if len(body) <= 2 || err != nil || code != http.StatusOK {
+			fmt.Printf("get failed %d %v %d \n", code, err, len(body))
+			r.HTML(200, "index", "Username doesot exists in the database")
+		} else {
+			payload := []byte(body)
+			var result map[string]interface{}
+			if err := json.Unmarshal(payload, &result); err != nil {
+				panic(err)
+			}
+
+			row := result["Item"].(map[string]interface{})
+			password := row["password"].(map[string]interface{})
+			publickey := row["publickey"].(map[string]interface{})
+
+			err2 := bcrypt.CompareHashAndPassword([]byte(password["S"].(string)), []byte(signin.Password))
+
+			if err2 != nil {
+
+				r.HTML(200, "chromeindex", "Email or password is incorrect.Try again")
+			} else {
+				setSession(signin.Email, publickey["S"].(string), response)
+				r.HTML(200, "chromeuser", signin.Email)
 			}
 		}
 	})
@@ -375,7 +435,7 @@ func main() {
 		fmt.Println("body is %s", body)
 		if len(body) <= 2 || err != nil || code != http.StatusOK {
 			fmt.Printf("get failed %d %v %d \n", code, err, len(body))
-			r.JSON(200, map[string]interface{}{"status": "Username does not exist in the database"})
+			r.JSON(200, map[string]interface{}{"status": "Username doesot exists in the database"})
 		} else {
 			payload := []byte(body)
 			var result map[string]interface{}
@@ -390,7 +450,7 @@ func main() {
 			err2 := bcrypt.CompareHashAndPassword([]byte(password["S"].(string)), []byte(signin.Password))
 
 			if err2 != nil {
-				r.JSON(200, map[string]interface{}{"status": "Email or password is incorrect. Try again"})
+				r.JSON(200, map[string]interface{}{"status": "Email or password is incorrect.Try again"})
 
 			} else {
 
@@ -523,6 +583,12 @@ func main() {
 		// s.Delete("userId")
 		clearSession(response)
 		r.HTML(200, "index", nil)
+	})
+
+	m.Get("/chromelogout", func(r render.Render, response http.ResponseWriter) {
+		// s.Delete("userId")
+		clearSession(response)
+		r.HTML(200, "chromeindex", nil)
 	})
 
 	m.Post("/messages", binding.Form(Msg{}), func(msg Msg, r render.Render, request *http.Request) {
@@ -819,7 +885,9 @@ func main() {
 		}
 	})
 	m.Post("/uploadfile", uploadHandler)
+	m.Post("/uploadfilefromurl", uploadurlHandler)
 	m.Post("/groupuploadfile/:id", groupUploadHandler)
+	m.Post("/groupuploadfilefromurl/:id", groupUploadUrlHandler)
 
 	m.Run()
 
@@ -1297,26 +1365,31 @@ func insertToGroupData(groupid string, username string, content string, ctype st
 }
 
 func uploadHandler(w http.ResponseWriter, r *http.Request, rend render.Render) {
-	file, header, err := r.FormFile("file") // the FormFile function takes in the POST input id file
-	defer file.Close()
 
-	if err != nil {
-		fmt.Fprintln(w, err)
-		return
-	}
-
-	l, _ := s3util.Create("https://s3-us-west-2.amazonaws.com/megh-uploads/"+header.Filename, nil, nil)
-	_, err2 := io.Copy(l, file)
-	l.Close()
-	if err2 != nil {
-		fmt.Fprintln(w, err)
-	}
 	// write the content from POST to the file
 
 	userName := getUserName(r)
 
 	present := validateUsername(userName)
+
+	if userName == "" {
+		rend.JSON(200, map[string]interface{}{"status": "Unauthorized request"})
+	}
 	if present {
+		file, header, err := r.FormFile("file") // the FormFile function takes in the POST input id file
+		defer file.Close()
+
+		if err != nil {
+			fmt.Fprintln(w, err)
+			return
+		}
+
+		l, _ := s3util.Create("https://s3-us-west-2.amazonaws.com/megh-uploads/"+header.Filename, nil, nil)
+		_, err2 := io.Copy(l, file)
+		l.Close()
+		if err2 != nil {
+			fmt.Fprintln(w, err)
+		}
 		if insertToUserData(userName, header.Filename, "file") {
 			rend.JSON(200, map[string]interface{}{"status": "success"})
 		} else {
@@ -1329,28 +1402,119 @@ func uploadHandler(w http.ResponseWriter, r *http.Request, rend render.Render) {
 
 }
 
+func uploadurlHandler(w http.ResponseWriter, r *http.Request, rend render.Render) {
+
+	// write the content from POST to the fil
+	userName := getUserName(r)
+
+	present := validateUsername(userName)
+
+	if userName == "" {
+		rend.JSON(200, map[string]interface{}{"status": "Unauthorized request"})
+	}
+	if present {
+		r.ParseForm()
+		fmt.Println(r.Form)
+		fmt.Println(r.FormValue("url"))
+
+		resp, err := http.Get(r.FormValue("url"))
+		defer resp.Body.Close()
+
+		if err != nil {
+			fmt.Fprintln(w, err)
+			return
+		}
+		ctime := fmt.Sprintf("%v", time.Now().Unix())
+		filename := ctime + "" + r.FormValue("type")
+
+		l, _ := s3util.Create("https://s3-us-west-2.amazonaws.com/megh-uploads/"+filename, nil, nil)
+		_, err2 := io.Copy(l, resp.Body)
+		l.Close()
+		if err2 != nil {
+			fmt.Fprintln(w, err)
+		}
+		if insertToUserData(userName, filename, "file") {
+			rend.JSON(200, map[string]interface{}{"status": "success"})
+		} else {
+			rend.JSON(200, map[string]interface{}{"status": "failure"})
+		}
+	} else {
+
+		rend.JSON(200, map[string]interface{}{"Access denied": "Unauthorized request"})
+	}
+
+}
 func groupUploadHandler(w http.ResponseWriter, r *http.Request, rend render.Render, params martini.Params) {
-	file, header, err := r.FormFile("file") // the FormFile function takes in the POST input id file
-	defer file.Close()
-
-	if err != nil {
-		fmt.Fprintln(w, err)
-		return
-	}
-
-	l, _ := s3util.Create("https://s3-us-west-2.amazonaws.com/megh-uploads/"+header.Filename, nil, nil)
-	_, err2 := io.Copy(l, file)
-	l.Close()
-	if err2 != nil {
-		fmt.Fprintln(w, err)
-	}
 
 	userName := getUserName(r)
 
 	present := validateUsername(userName)
+
+	if userName == "" {
+		rend.JSON(200, map[string]interface{}{"status": "Unauthorized request"})
+	}
 	if present {
+		file, header, err := r.FormFile("file") // the FormFile function takes in the POST input id file
+		defer file.Close()
+
+		if err != nil {
+			fmt.Fprintln(w, err)
+			return
+		}
+
+		l, _ := s3util.Create("https://s3-us-west-2.amazonaws.com/megh-uploads/"+header.Filename, nil, nil)
+		_, err2 := io.Copy(l, file)
+		l.Close()
+		if err2 != nil {
+			fmt.Fprintln(w, err)
+		}
+
 		if insertToGroupData(params["id"], userName, header.Filename, "file") {
 			go sendNotificationsToAndroid(params["id"], userName, header.Filename, "file")
+			rend.JSON(200, map[string]interface{}{"status": "success"})
+		} else {
+			rend.JSON(200, map[string]interface{}{"status": "failure"})
+		}
+	} else {
+
+		rend.JSON(200, map[string]interface{}{"Access denied": "Unauthorized request"})
+	}
+
+}
+
+func groupUploadUrlHandler(w http.ResponseWriter, r *http.Request, rend render.Render, params martini.Params) {
+
+	// write the content from POST to the fil
+	userName := getUserName(r)
+
+	if userName == "" {
+		rend.JSON(200, map[string]interface{}{"status": "Unauthorized request"})
+	}
+	present := validateUsername(userName)
+
+	if present {
+		r.ParseForm()
+		fmt.Println(r.Form)
+		fmt.Println(r.FormValue("url"))
+
+		resp, err := http.Get(r.FormValue("url"))
+		defer resp.Body.Close()
+
+		if err != nil {
+			fmt.Fprintln(w, err)
+			return
+		}
+		ctime := fmt.Sprintf("%v", time.Now().Unix())
+		filename := ctime + "" + r.FormValue("type")
+
+		l, _ := s3util.Create("https://s3-us-west-2.amazonaws.com/megh-uploads/"+filename, nil, nil)
+		_, err2 := io.Copy(l, resp.Body)
+		l.Close()
+		if err2 != nil {
+			fmt.Fprintln(w, err)
+		}
+		if insertToGroupData(params["id"], userName, filename, "file") {
+			go sendNotificationsToAndroid(params["id"], userName, filename, "file")
 			rend.JSON(200, map[string]interface{}{"status": "success"})
 		} else {
 			rend.JSON(200, map[string]interface{}{"status": "failure"})
