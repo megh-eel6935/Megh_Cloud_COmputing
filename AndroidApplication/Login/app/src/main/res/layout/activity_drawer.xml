@@ -24,7 +24,7 @@
         android:choiceMode="singleChoice"
         android:divider="@android:color/transparent"
         android:dividerHeight="0dp"
-        android:background="#111"
+        android:background="#D9042c62"
         android:entries="@array/nav_drawer_left_items"/>
 
     <ListView android:id="@+id/drawer_right_slider_listView"
@@ -34,7 +34,7 @@
         android:choiceMode="singleChoice"
         android:divider="@android:color/transparent"
         android:dividerHeight="0dp"
-        android:background="#111"
+        android:background="#D9042c62"
         android:entries="@array/nav_drawer_right_items"/>
 
 

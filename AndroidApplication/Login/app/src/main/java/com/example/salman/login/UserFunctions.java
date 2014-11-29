@@ -64,7 +64,7 @@ public class UserFunctions {
         return setCookieList.get(0).substring(0,cookieName.length()+161);
     }
 
-    public static String getSelectedListItemFunctionality(int position) throws Exception {
+    public static String getSelectedListItemData(int position) throws Exception {
         String uri;
         switch (position){
             case 0:
@@ -85,20 +85,23 @@ public class UserFunctions {
         return content;
     }
 
+    public static String getSelectedGroupData (String grpID) throws Exception {
+        String uri = "http://104.131.126.89/getgroupdatabyid/" + grpID;
+        Log.v("grpID", grpID);
+        String content = sendGetMsg(uri);
+        return content;
+    }
+
     public static String sendGetMsg(String uri) throws Exception {
         URL url = new URL(uri);
         String cookie = Database.database.get("cookie");
-        Log.v("checkcookie", cookie);
 
         HttpURLConnection newConnection = (HttpURLConnection) url.openConnection();
-
-        Log.v("check1", "1");
 
         newConnection.setRequestMethod("GET");
 
         newConnection.setRequestProperty("Cookie", cookie);
 
-        Log.v("check2", "2");
         BufferedReader in = new BufferedReader(new InputStreamReader(newConnection.getInputStream()));
         String inputLine;
         StringBuffer response = new StringBuffer();
@@ -108,7 +111,6 @@ public class UserFunctions {
         }
         in.close();
 
-        Log.v("response", response.toString());
         return response.toString();
     }
 }

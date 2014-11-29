@@ -7,16 +7,16 @@
 
     <ImageView
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="36dp"
         android:id="@+id/internalLayout_listItem_icon_imageView"
         android:layout_toRightOf="@+id/internalLayout_listItem_title_textView"/>
 
     <TextView
-        android:layout_gravity="center_horizontal"
+        android:gravity="center_vertical"
         android:layout_width="200dp"
         android:layout_height="36dp"
         android:id="@+id/internalLayout_listItem_title_textView"
         android:layout_marginLeft="8dp"
-        android:layout_marginTop="15dp"
+
         android:layout_alignParentTop="true" />
 </RelativeLayout>

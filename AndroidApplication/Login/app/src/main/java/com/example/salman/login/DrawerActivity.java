@@ -2,6 +2,7 @@ package com.example.salman.login;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -18,26 +19,34 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
+
+import com.example.salman.login.CustomObjects.GroupData;
+import com.example.salman.login.CustomObjects.Groups;
+import com.example.salman.login.CustomObjects.SelectedContent;
+import com.example.salman.login.CustomObjects.UserMessage;
 
 import java.util.List;
+
 
 /**
  * Created by salman on 11/27/14.
  */
 public class DrawerActivity extends ActionBarActivity {
 
+    SelectedContent selectedContent;
+
     private DrawerLayout drawerLayout;
     private ListView drawerLeftListView;
+    private ListView drawer_baseLayout_listView;
     private ListView drawerRightListView;
 
     private ActionBarDrawerToggle drawerLeftListener;
 
     private AdapterLeftDrawerList adapterLeftDrawerList;
     private AdapterMessage adapterMessage;
-    private AdapterGroups adapterGroups;
 
-    private TextView testTextView;
+    private List<Groups> groupsList;
+    private List<GroupData> groupsDataList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,16 +55,18 @@ public class DrawerActivity extends ActionBarActivity {
 
         drawerLayout = (DrawerLayout) findViewById(R.id.drawer_activityID);
         drawerLeftListView = (ListView) findViewById(R.id.drawer_left_slider_listView);
+        drawer_baseLayout_listView = (ListView) findViewById(R.id.drawer_baseLayout_listView);
         drawerRightListView = (ListView) findViewById(R.id.drawer_right_slider_listView);
-
-        //////////////////
-        testTextView = (TextView) findViewById(R.id.drawer_insideTextView);
-        /////////////////
 
         adapterLeftDrawerList = new AdapterLeftDrawerList(this);
         drawerLeftListView.setAdapter(adapterLeftDrawerList);
 
-        drawerLeftListView.setOnItemClickListener(new ItemClickListener());
+
+
+        //adapterMessage = new AdapterMessage(this);
+
+        drawerLeftListView.setOnItemClickListener(new LeftDrawerItemClickListener());
+        drawerRightListView.setOnItemClickListener(new RightDrawerItemClickListener());
 
         drawerLeftListener = new ActionBarDrawerToggle(this, drawerLayout,
                 R.string.drawer_open, R.string.drawer_close) {
@@ -63,19 +74,35 @@ public class DrawerActivity extends ActionBarActivity {
             @Override
             public void onDrawerOpened(View drawerView) {
                 //super.onDrawerOpened(drawerView);
-                Toast.makeText(DrawerActivity.this, "Drawer Opened", Toast.LENGTH_SHORT).show();
+
             }
 
             @Override
             public void onDrawerClosed(View drawerView) {
                 //super.onDrawerClosed(drawerView);
-                Toast.makeText(DrawerActivity.this, "Drawer Closed", Toast.LENGTH_SHORT).show();
+
             }
         };
 
         drawerLayout.setDrawerListener(drawerLeftListener);
         getSupportActionBar().setHomeButtonEnabled(true);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        //TODO:outState.put("lastUsedAdapter",drawer_baseLayout_listView.getAdapter());
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
     }
 
     @Override
@@ -98,32 +125,68 @@ public class DrawerActivity extends ActionBarActivity {
         drawerLeftListener.syncState();
     }
 
-    private class ItemClickListener implements AdapterView.OnItemClickListener {
+
+
+    /*
+    * DrawerActivity custom methods
+    * */
+
+    public void setTitle(String title) {
+        getSupportActionBar().setTitle(title);
+    }
+
+
+
+    /*
+    * DrawerActivity click listeners
+    * */
+
+     private class RightDrawerItemClickListener implements AdapterView.OnItemClickListener {
+
+         @Override
+         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+             BTGetSelectedItemHandler itemClicked = new BTGetSelectedItemHandler();
+             itemClicked.execute(position);
+
+             drawerRightListView.setItemChecked(position, true);
+             drawerLayout.closeDrawer(drawerRightListView);
+         }
+
+         private class BTGetSelectedItemHandler extends AsyncTask<Integer, String, Void> {
+
+             @Override
+             protected Void doInBackground(Integer... params) {
+                 if (params[0] == 0) {
+                     Intent chooseFile = new Intent(getApplicationContext(), FileChooser.class);
+                     startActivity(chooseFile);
+                 }
+                 return null;
+             }
+         }
+
+     }
+
+     private class LeftDrawerItemClickListener implements AdapterView.OnItemClickListener {
 
         @Override
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-
-            String content = null;
-
-            Toast.makeText(DrawerActivity.this, adapterLeftDrawerList.leftDrawerOptions[position] + " was selected",
-                    Toast.LENGTH_SHORT).show();
-
-            BTGetSelectedItemFunctionalityHandler itemClicked = new BTGetSelectedItemFunctionalityHandler();
+            BTGetSelectedItemHandler itemClicked = new BTGetSelectedItemHandler();
             itemClicked.execute(position);
 
-            selectMethod(position);
+            drawerLeftListView.setItemChecked(position, true);
+            setTitle(adapterLeftDrawerList.leftDrawerOptions[position]);
             drawerLayout.closeDrawer(drawerLeftListView);
         }
 
-        private class BTGetSelectedItemFunctionalityHandler extends AsyncTask<Integer, String, SelectedContent> {
+        private class BTGetSelectedItemHandler extends AsyncTask<Integer, String, SelectedContent> {
 
             @Override
             protected SelectedContent doInBackground(Integer... params) {
                 try {
-                    String content = UserFunctions.getSelectedListItemFunctionality(params[0]);
+                    String content = UserFunctions.getSelectedListItemData(params[0]);
                     int position = params[0];
 
-                    SelectedContent selectedContent = new SelectedContent();
+                    selectedContent = new SelectedContent();
                     selectedContent.setContent(content);
                     selectedContent.setPosition(position);
                     return selectedContent;
@@ -136,41 +199,80 @@ public class DrawerActivity extends ActionBarActivity {
 
             @Override
             protected void onPostExecute(SelectedContent s) {
-                ListView drawer_baseLayout_listView = (ListView) findViewById(R.id.drawer_baseLayout_listView);
                 if (s.getPosition() == 0) {
-                    List<Message> messageList = JsonCustomParser.readAndParseJSONMessages(s.getContent());
+                    List<UserMessage> messageList = JsonCustomParser.readAndParseJSONMessages(s.getContent());
                     adapterMessage = new AdapterMessage(DrawerActivity.this,
                             R.layout.internallayout_drawer_base_item, messageList);
 
                     drawer_baseLayout_listView.setAdapter(adapterMessage);
 
-                } else if (s.getPosition() == 1) {
-                    List<Message> messageList = JsonCustomParser.readAndParseJSONMessages(s.getContent());
+                } //TODO:remove 1
+                else if (s.getPosition() == 1) {
+                    List<UserMessage> messageList = JsonCustomParser.readAndParseJSONMessages(s.getContent());
                     adapterMessage = new AdapterMessage(DrawerActivity.this,
                             R.layout.internallayout_drawer_base_item, messageList);
 
                     drawer_baseLayout_listView.setAdapter(adapterMessage);
 
-                } else if (s.getPosition() == 2){
-                    List<Groups> groupsList = JsonCustomParser.readAndParseJSONGroups(s.getContent());
-                    adapterGroups = new AdapterGroups(DrawerActivity.this,
+                }else if (s.getPosition() == 2){
+                    groupsList = JsonCustomParser.readAndParseJSONGroups(s.getContent());
+                    AdapterGroups adapterGroups = new AdapterGroups(DrawerActivity.this,
                             R.layout.internallayout_drawer_base_item, groupsList);
 
                     drawer_baseLayout_listView.setAdapter(adapterGroups);
+
+                    drawer_baseLayout_listView.setOnItemClickListener(new GroupsItemClickListener());
                 }
             }
         }
     }
 
-    public void selectMethod(int position) {
-        drawerLeftListView.setItemChecked(position, true);
-        setTitle(adapterLeftDrawerList.leftDrawerOptions[position]);
-    }
+    private class GroupsItemClickListener implements AdapterView.OnItemClickListener {
 
-    public void setTitle(String title) {
-        getSupportActionBar().setTitle(title);
+        @Override
+        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
+            BTGetSelectedGroupHandler groupClicked = new BTGetSelectedGroupHandler();
+            groupClicked.execute(position);
+
+            //drawer_baseLayout_listView.setItemChecked(position, true);
+            setTitle(groupsList.get(position).getGroup_name());
+        }
+
+        private class BTGetSelectedGroupHandler extends AsyncTask<Integer, String, String> {
+
+            String grpID;
+            String content;
+
+            @Override
+            protected String doInBackground(Integer... params) {
+                grpID = groupsList.get(params[0]).getGroup_id();
+                try {
+                    content = UserFunctions.getSelectedGroupData(grpID);
+                    return content;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return null;
+                }
+            }
+
+            @Override
+            protected void onPostExecute(String s) {
+                groupsDataList = JsonCustomParser.readAndParseJSONGroupData(s);
+                AdapterGroupData adapterGroupData = new AdapterGroupData(DrawerActivity.this,
+                        R.layout.internallayout_drawer_base_item, groupsDataList);
+
+                drawer_baseLayout_listView.setAdapter(adapterGroupData);
+            }
+        }
     }
 }
+
+
+
+/*
+* Adapters
+* */
 
 class AdapterLeftDrawerList extends BaseAdapter {
 
@@ -219,12 +321,12 @@ class AdapterLeftDrawerList extends BaseAdapter {
 }
 
 
-class AdapterMessage extends ArrayAdapter<Message> {
+class AdapterMessage extends ArrayAdapter<UserMessage> {
 
     private Context context;
-    private List<Message> messageList;
+    private List<UserMessage> messageList;
 
-    public AdapterMessage(Context context, int resource, List<Message> objects) {
+    public AdapterMessage(Context context, int resource, List<UserMessage> objects) {
         super(context, resource, objects);
         this.context = context;
         this.messageList = objects;
@@ -236,7 +338,7 @@ class AdapterMessage extends ArrayAdapter<Message> {
 
         View view = inflater.inflate(R.layout.internallayout_drawer_base_item, parent, false);
 
-        Message msg = messageList.get(position);
+        UserMessage msg = messageList.get(position);
         TextView tv = (TextView) view.findViewById(R.id.internalLayout_baseItem_title_textView);
         tv.setText(msg.getContent());
 
@@ -250,7 +352,6 @@ class AdapterMessage extends ArrayAdapter<Message> {
         } else if (msg.getContent_type().equals("url")) {
             img.setImageResource(R.drawable.ic_url);
         }
-
         return view;
     }
 }
@@ -286,23 +387,37 @@ class AdapterGroups extends ArrayAdapter<Groups> {
     }
 }
 
-class SelectedContent {
-    private String content;
-    private int position;
+class AdapterGroupData extends ArrayAdapter<GroupData> {
 
-    public int getPosition() {
-        return position;
+    private Context context;
+    private List<GroupData> groupDataList;
+
+    public AdapterGroupData(Context context, int resource, List<GroupData> objects) {
+        super(context, resource, objects);
+        this.context = context;
+        this.groupDataList = objects;
     }
 
-    public void setPosition(int position) {
-        this.position = position;
-    }
+    public View getView(int position, View convertView, ViewGroup parent) {
+        LayoutInflater inflater =
+                (LayoutInflater) context.getSystemService(Activity.LAYOUT_INFLATER_SERVICE);
 
-    public String getContent() {
-        return content;
-    }
+        View view = inflater.inflate(R.layout.internallayout_drawer_base_item, parent, false);
 
-    public void setContent(String content) {
-        this.content = content;
+        GroupData grpData = groupDataList.get(position);
+        TextView tv = (TextView) view.findViewById(R.id.internalLayout_baseItem_title_textView);
+        tv.setText(grpData.getContent());
+
+
+        ImageView img = (ImageView) view.findViewById(R.id.internalLayout_baseItem_icon_imageView);
+
+        if (grpData.getContent_type().equals("text")) {
+            img.setImageResource(R.drawable.ic_message);
+        } else if (grpData.getContent_type().equals("file")) {
+            img.setImageResource(R.drawable.ic_file);
+        } else if (grpData.getContent_type().equals("url")) {
+            img.setImageResource(R.drawable.ic_url);
+        }
+        return view;
     }
 }

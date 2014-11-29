@@ -7,13 +7,17 @@
 
    <ImageView
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="50dp"
+        android:paddingLeft="20dp"
+        android:gravity="center_vertical"
         android:id="@+id/internalLayout_baseItem_icon_imageView"/>
 
     <TextView
         android:layout_height="wrap_content"
         android:layout_width="match_parent"
-        android:height="40dp"
+        android:paddingLeft="8dp"
+        android:paddingRight="60dp"
+        android:height="50dp"
         android:gravity="center_vertical"
         android:id="@+id/internalLayout_baseItem_title_textView" />
 </LinearLayout>

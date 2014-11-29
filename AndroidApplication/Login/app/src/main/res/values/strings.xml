@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
     <string name="app_name">Megh</string>
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
@@ -15,7 +14,7 @@
     </string-array>
 
     <string-array name="nav_drawer_right_items">
-        <item >option1</item>
+        <item >Upload</item>
         <item >option2</item>
         <item >option3</item>
     </string-array>
@@ -23,5 +22,4 @@
     /////////////////////////////////////////
     <!-- Content Description -->
     <string name="desc_list_item_icon">Item Icon</string>
-
 </resources>
