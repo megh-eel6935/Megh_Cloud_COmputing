@@ -1,126 +1,103 @@
-/*
 package com.example.salman.login;
 
 import android.util.Log;
 
+import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.Iterator;
-import java.util.Map;
-
-*/
-/**
- * Created by salman on 11/28/14.
- *//*
 
 public class UploadFile {
-
-    public ResponseObject multipartRequest(String urlTo, String post, Map httpPara, String filepath, String filefield) throws ParseException, IOException {
+    public static boolean handleFile(String filePath) throws Exception {
         HttpURLConnection connection = null;
-        DataOutputStream outputStream = null;
-        InputStream inputStream = null;
-        int ResponseCode;
+        DataOutputStream outStream = null;
+        InputStreamReader inStream = null;
 
-        String twoHyphens = "--";
-        String boundary =  "*****"+Long.toString(System.currentTimeMillis())+"*****";
         String lineEnd = "\r\n";
-
-        String result = "";
+        String twoHyphens = "--";
+        String boundary = "*****";
 
         int bytesRead, bytesAvailable, bufferSize;
+
         byte[] buffer;
-        int maxBufferSize = 1*1024*1024;
 
-        String[] q = filepath.split("/");
-        int idx = q.length - 1;
+        int maxBufferSize = 1 * 1024 * 1024;
 
-        try {
-            File file = new File(filepath);
-            FileInputStream fileInputStream = new FileInputStream(file);
-            URL url = new URL(urlTo);
-            connection = (HttpURLConnection) url.openConnection();
-            connection.setDoInput(true);
-            connection.setDoOutput(true);
-            connection.setUseCaches(false);
+        String urlString = "http://104.131.126.89/uploadfile";
 
-            connection.setRequestMethod("POST");
-            connection.setRequestProperty("Connection", "Keep-Alive");
-            connection.setRequestProperty("User-Agent", "Android Multipart HTTP Client 1.0");
-            connection.setRequestProperty("Content-Type", "multipart/form-data; boundary="+boundary);
-            Log.i(Commons.TAG, "filepath " + getMimeType(filepath) );
 
-            outputStream = new DataOutputStream(connection.getOutputStream());
-            outputStream.writeBytes(twoHyphens + boundary + lineEnd);
-            outputStream.writeBytes("Content-Disposition: form-data; name=\"" + filefield + "\"; filename=\"" + q[idx] +"\"" + lineEnd);
-            // outputStream.writeBytes("Content-Type: video/mp4" + lineEnd);
-            outputStream.writeBytes("Content-Type: " + getMimeType(filepath) + lineEnd);
+        FileInputStream fileInputStream = null;
 
-            outputStream.writeBytes("Content-Transfer-Encoding: binary" + lineEnd);
-            outputStream.writeBytes(lineEnd);
+        System.out.println(filePath);
 
+        Log.v("filePath_debug", filePath);
+
+        fileInputStream = new FileInputStream(new File(filePath));
+
+        URL url = new URL(urlString);
+        String cookie = Database.database.get("cookie");
+        String fileName = Database.database.get("currentFileName");
+
+        connection = (HttpURLConnection) url.openConnection();
+        connection.setDoInput(true);
+        connection.setDoOutput(true);
+        connection.setUseCaches(false);
+
+        connection.setRequestMethod("POST");
+        connection.setRequestProperty("Cookie", cookie);
+        connection.setRequestProperty("Connection", "Keep-Alive");
+        connection.setRequestProperty("Content-Type", "multipart/form-data;boundary=" + boundary);
+
+        outStream = new DataOutputStream(connection.getOutputStream());
+
+        outStream.writeBytes(addParam("file", fileName, twoHyphens, boundary, lineEnd));
+
+        outStream.writeBytes(twoHyphens + boundary + lineEnd);
+        outStream.writeBytes("Content-Disposition: form-data; name=\"uploadedfile\"; filename=\"" + filePath + "\"" + lineEnd + "Content-Type: " + "file" + lineEnd + "Content-Transfer-Encoding: binary" + lineEnd);
+        outStream.writeBytes(lineEnd);
+
+        bytesAvailable = fileInputStream.available();
+        bufferSize = Math.min(bytesAvailable, maxBufferSize);
+        buffer = new byte[bufferSize];
+
+        bytesRead = fileInputStream.read(buffer, 0, bufferSize);
+
+        while (bytesRead > 0) {
+            outStream.write(buffer, 0, bufferSize);
             bytesAvailable = fileInputStream.available();
             bufferSize = Math.min(bytesAvailable, maxBufferSize);
-            buffer = new byte[bufferSize];
-
             bytesRead = fileInputStream.read(buffer, 0, bufferSize);
-            while(bytesRead > 0) {
-                outputStream.write(buffer, 0, bufferSize);
-                bytesAvailable = fileInputStream.available();
-                bufferSize = Math.min(bytesAvailable, maxBufferSize);
-                bytesRead = fileInputStream.read(buffer, 0, bufferSize);
-
-            }
-            outputStream.writeBytes(lineEnd);
-
-            // Upload POST Data
-//                String[] posts = post.split("&");
-//                int max = posts.length;
-//                for(int i=0; i<max;i++) {
-//                        outputStream.writeBytes(twoHyphens + boundary + lineEnd);
-//                        String[] kv = posts[i].split("=");
-//                        outputStream.writeBytes("Content-Disposition: form-data; name=\"" + kv[0] + "\"" + lineEnd);
-//                        outputStream.writeBytes("Content-Type: text/plain"+lineEnd);
-//                        outputStream.writeBytes(lineEnd);
-//                        outputStream.writeBytes(kv[1]);
-//                        outputStream.writeBytes(lineEnd);
-//                }
-//
-            Iterator iter = httpPara.entrySet().iterator();
-
-            while (iter.hasNext()) {
-                Map.Entry para = (Map.Entry) iter.next();
-                outputStream.writeBytes(twoHyphens + boundary + lineEnd);
-                outputStream.writeBytes("Content-Disposition: form-data; name=\"" + para.getKey().toString() + "\"" + lineEnd);
-                outputStream.writeBytes("Content-Type: text/plain"+lineEnd);
-                outputStream.writeBytes(lineEnd);
-                outputStream.writeBytes(para.getValue().toString());
-                outputStream.writeBytes(lineEnd);
-            }
-            outputStream.writeBytes(twoHyphens + boundary + twoHyphens + lineEnd);
-            outputStream.flush();
-            outputStream.close();
-
-            ResponseCode = connection.getResponseCode();
-            inputStream = connection.getInputStream();
-            result = this.convertStreamToString(inputStream);
-
-            fileInputStream.close();
-            inputStream.close();
-
-
-            return new ResponseObject(ResponseCode, result);
-        } catch(Exception e) {
-            Log.e("MultipartRequest", "Multipart Form Upload Error");
-
-            e.printStackTrace();
-
-            return null;
         }
+
+        outStream.writeBytes(lineEnd);
+        outStream.writeBytes(twoHyphens + boundary + twoHyphens + lineEnd);
+
+        fileInputStream.close();
+        outStream.flush();
+        outStream.close();
+
+
+        inStream = new InputStreamReader(connection.getInputStream());
+        BufferedReader br = new BufferedReader(inStream);
+        String str;
+
+        while ((str = br.readLine()) != null) {
+            if (JsonCustomParser.readAndParseJSONMessages(str).equals("{\"status\":\"Success\"}")) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+        inStream.close();
+
+
+        return false;
+    }
+
+    private static String addParam(String key, String value, String twoHyphens, String boundary, String lineEnd) {
+        return twoHyphens + boundary + lineEnd + "Content-Disposition: form-data; name=\"" + key + "\"" + lineEnd + lineEnd + value + lineEnd;
     }
 }
-*/

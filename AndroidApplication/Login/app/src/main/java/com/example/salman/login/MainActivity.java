@@ -10,7 +10,6 @@ import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
-import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -18,8 +17,6 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.Scroller;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -33,7 +30,7 @@ public class MainActivity extends ActionBarActivity {
     private Button login_button;
     private Button register_button;
 
-    TextView temp_output;
+    //TextView temp_output;
     public static EditText login_email;
     public static EditText login_password;
 
@@ -64,11 +61,11 @@ public class MainActivity extends ActionBarActivity {
         login_email = (EditText) findViewById(R.id.login_email_editText);
         login_password = (EditText) findViewById(R.id.login_password_editText);
 
-        temp_output = (TextView) findViewById(R.id.login_testOutput_textView);
+        //temp_output = (TextView) findViewById(R.id.login_testOutput_textView);
         ///////////////////////////////////////////////////////////////////////////////////////||
-        temp_output.setScroller(new Scroller(this)); //                                        ||
-        temp_output.setVerticalScrollBarEnabled(true); //                                      ||
-        temp_output.setMovementMethod(new ScrollingMovementMethod());//                        ||
+        //temp_output.setScroller(new Scroller(this)); //                                        ||
+        //temp_output.setVerticalScrollBarEnabled(true); //                                      ||
+        //temp_output.setMovementMethod(new ScrollingMovementMethod());//                        ||
         ///////////////////////////////////////////////////////////////////////////////////////||
 
         context = getApplicationContext();
@@ -78,7 +75,7 @@ public class MainActivity extends ActionBarActivity {
             regID = getRegistrationId(context);
 
             //TODO: remove log
-            Log.v("RegistrationIDLog1","AAAAA:__"+ regID + "__:AAAAA");
+            //Log.v("RegistrationIDLog1","AAAAA:__"+ regID + "__:AAAAA");
 
             if (regID.isEmpty()) {
                 Log.i(TAG, "register in background commented out");
@@ -166,7 +163,7 @@ public class MainActivity extends ActionBarActivity {
             requestPackage.setUri(uri);
             requestPackage.setParam("email", login_email.getText().toString());
             requestPackage.setParam("password", login_password.getText().toString());
-            Log.v("RegistrationIDLog2", regID);
+            //Log.v("RegistrationIDLog2", regID);
             requestPackage.setParam("registration_id", regID);
             LoginButton_clicked.execute(requestPackage);
         }
@@ -184,7 +181,7 @@ public class MainActivity extends ActionBarActivity {
 
         @Override
         protected void onPreExecute() {
-            temp_output.append("PreExec" + "\n");
+            //temp_output.append("PreExec" + "\n");
         }
 
         @Override
@@ -219,7 +216,7 @@ public class MainActivity extends ActionBarActivity {
                 Toast.makeText(MainActivity.this, "Cannot connect to web server", Toast.LENGTH_LONG).show();
             }
             else {
-                temp_output.append(s+"\n");
+                //temp_output.append(s+"\n");
                 Intent goToHomepage = new Intent(getApplicationContext(), DrawerActivity.class);
                 startActivity(goToHomepage);
             }
@@ -319,7 +316,7 @@ public class MainActivity extends ActionBarActivity {
 
         @Override
         protected void onPostExecute(String msg) {
-            temp_output.append(msg + "\n");
+            //temp_output.append(msg + "\n");
         }
     }
 

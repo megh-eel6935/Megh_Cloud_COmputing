@@ -1,7 +1,5 @@
 package com.example.salman.login;
 
-import android.util.Log;
-
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.InputStreamReader;
@@ -47,7 +45,7 @@ public class UserFunctions {
         String cookie = getCookie("session", con);
 
         //TODO: remove log
-        Log.v(LOG_TAG, "cookie: " + cookie);
+        //Log.v(LOG_TAG, "cookie: " + cookie);
 
         if (cookie!= null) {
             Database.database.put("cookie", cookie);
@@ -65,36 +63,33 @@ public class UserFunctions {
     }
 
     public static String getSelectedListItemData(int position) throws Exception {
-        String uri;
+        String uri = null;
         switch (position){
             case 0:
                 uri = "http://104.131.126.89/getmessages";
                 break;
             case 1:
-                uri = "http://104.131.126.89/getmessages";
-                break;
-            case 2:
                 uri = "http://104.131.126.89/groupslist";
                 break;
-            default:
-                uri = "http://104.131.126.89/getmessages";
-                break;
+            //default:
+                //uri = "http://104.131.126.89/getmessages";
+                //break;
         }
-        Log.v("checkURI", uri);
+        //Log.v("checkURI", uri);
         String content = sendGetMsg(uri);
         return content;
     }
 
     public static String getSelectedGroupData (String grpID) throws Exception {
         String uri = "http://104.131.126.89/getgroupdatabyid/" + grpID;
-        Log.v("grpID", grpID);
+        //Log.v("grpID", grpID);
         String content = sendGetMsg(uri);
         return content;
     }
 
     public static String sendGetMsg(String uri) throws Exception {
         URL url = new URL(uri);
-        String cookie = Database.database.get("cookie");
+        String cookie = Database.database.get("cookie").toString();
 
         HttpURLConnection newConnection = (HttpURLConnection) url.openConnection();
 
