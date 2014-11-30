@@ -1,20 +1,22 @@
   var currentgroupid = "usertime";
   var currentgroupname = 0;
   var urlRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
+  var socketserver =getCookie("servernames");
+ // socketserver ="localhost:3000"
   var ChatRoom = function() {
       var c = this;
 
       c.create = function() {
           c.sendForm = document.getElementById("send-form");
-          c.textInput = c.sendForm.querySelector("#groupmessage");
+          c.textInput = c.sendForm.querySelector("#text-input");
 
           return c;
       };
 
       c.connect = function() {
 
-          console.log("ws://" + location.host + "/sockets/sanath");
-          c.ws = new WebSocket("ws://" + location.host + "/sockets/sanath");
+          console.log("ws://" + socketserver + "/sockets/sanath");
+          c.ws = new WebSocket("ws://" + socketserver +"/sockets/sanath/"+getCookie("username"));
           return c;
       };
 
@@ -61,7 +63,7 @@
 
       c.handleSend = function() {
           c.sendForm.addEventListener("click", function(e) {
-              e.preventDefault();
+              /*e.preventDefault();
 
               if (c.textInput.value && c.textInput.value.length) {
                   var messageData = {
@@ -72,8 +74,8 @@
                   };
                   c.send(messageData);
                   c.textInput.value = ''
-              }
-              return false;
+              } 
+              return false; */
           });
           return c;
       };
@@ -85,7 +87,7 @@
   };
 
   $(document).ready(function() {
-      //    chat = new ChatRoom();
+      chat = new ChatRoom();
 
 
       $('#publickey').text("Public key :" + getCookie("publickey"));
@@ -143,15 +145,12 @@
               $("#userslist").empty();
               for (var i = 0; i < length; i++) {
                   if (data.data[i].content_type == "text") {
-                      //var temp = "<tr><td>" + linkify(data.data[i].content) + " <td> <td align='right'>message</td></tr>";
                       var timeline = "<li id=\"li" + data.data[i].timestamp + "\"><div class=\"timeline-badge warning\"><i class=\"glyphicon glyphicon-envelope\"></i></div><div class=\"timeline-panel\">  <div id=" + data.data[i].timestamp + " class=\"close\">&times;</div>" + "<div class=\"timeline-heading\"><h4 class=\"timeline-title\">" + linkify(data.data[i].content) + "</h4><p><small class=\"text-muted\">" + "<i class=\"glyphicon glyphicon-time\"></i>" + timeConverter(data.data[i].timestamp) + "</small></p></div><div class=\"timeline-body\">" + "<p> shared from your android device</p></div></div></li>"
 
                   } else if (data.data[i].content_type == "url") {
-                      // var temp = "<tr><td>" + linkify(data.data[i].content) + " <td> <td align='right'>url</td></tr>";
                       var timeline = "<li id=\"li" + data.data[i].timestamp + "\"><div class=\"timeline-badge info\"><i class=\"glyphicon glyphicon-link\"></i></div><div class=\"timeline-panel\"> <div id=" + data.data[i].timestamp + " class=\"close\">&times;</div>" + "<div class=\"timeline-heading\"><h4 class=\"timeline-title\">" + linkify(data.data[i].content) + "</h4><p><small class=\"text-muted\">" + "<i class=\"glyphicon glyphicon-time\"></i>" + timeConverter(data.data[i].timestamp) + "</small></p></div><div class=\"timeline-body\">" + "<p>shared from chrome</p></div></div></li>"
                   } else if (data.data[i].content_type == "file") {
 
-                      //var temp = "<tr><td>" + data.data[i].content + "<td> <td align='right'><a href='https://s3-us-west-2.amazonaws.com/megh-uploads/" + data.data[i].content + "'>download</a></td></tr>";
                       var timeline = "<li id=\"li" + data.data[i].timestamp + "\"><div class=\"timeline-badge danger\"><i class=\"glyphicon glyphicon-file\"></i></div><div class=\"timeline-panel\">   <div id=" + data.data[i].timestamp + " class=\"close\">&times;</div>" + "<div class=\"timeline-heading\"><h4 class=\"timeline-title\"><a href='https://s3-us-west-2.amazonaws.com/megh-uploads/" + data.data[i].content + "' class=\"glyphicon glyphicon-download-alt\">  </a> " + data.data[i].content + "</h4><p><small class=\"text-muted\">" + "<i class=\"glyphicon glyphicon-time\"></i>" + timeConverter(data.data[i].timestamp) + "</small></p></div><div class=\"timeline-body\">" + "<p>shared from browser</p></div></div></li>"
 
                   }
@@ -348,9 +347,7 @@
 
              updateuserslist();
 
-          });
-          
-
+          });          
       });
 
       $("#userfilesend").click(function() {
@@ -359,6 +356,7 @@
 
           console.log(currentgroupid);
           if (checkurl(value)) {
+              var isurl =true;
               if (id == "usertime") {
                   var url = "/urls";
               } else {
@@ -380,6 +378,16 @@
               console.log(status);
               $("#text-input").val("");
               updatelist(id);
+              if(isurl){
+
+                  console.log("message sent");
+                    chat.ws.send('{"type":"url","from":"'+getCookie(name)+'","groupid":"' + currentgroupid + '","content":"'+value+'"}');
+                 
+                 }else{
+                   console.log("message sent");
+
+                    chat.ws.send('{"type":"text","from":"'+getCookie(name)+'","groupid":"' + currentgroupid + '","content":"'+value+'"}');
+                 } 
           });
       });
 
@@ -392,6 +400,9 @@
           } else {
               var url = "/groupuploadfile/" + id;
           }
+          var filename = $("#userfile").val().split('\\').pop();
+          console.log("filename is "+filename);
+          
           var file = $("#userfile")[0].files[0];
           var formdata = new FormData();
           formdata.append("file", file);
@@ -402,10 +413,8 @@
               contentType: false,
               type: 'POST',
               success: function(data) {
-
-                  updatelist(id);
-                  //    chat.ws.send('{"type":"message","from":"sanath","groupid":"' + currentgroupid + '","text":"file upload"}');
-                  
+                  updatelist(id);                  
+                  chat.ws.send('{"type":"file","from":"'+getCookie(name)+'","groupid":"' + currentgroupid + '","content":"'+filename+'"}');
               }
           });
       });
@@ -444,6 +453,7 @@
       } else {
           var url = "/getgroupdatabyid/" + id;
       }
+      console.log(url);
       $.get(url, function(data) {
           sap = JSON.stringify(data);
           var length = data.data.length;
@@ -528,9 +538,9 @@
               status.setProgress(100);
               if (ug == "group") {
                   updatelist(currentgroupid);
-                  // chat.ws.send('{"type":"message","from":"sanath","groupid":"' + currentgroupid + '","text":"file upload"}');
+                  chat.ws.send('{"type":"message","from":"sanath","groupid":"' + currentgroupid + '","text":"file upload"}');
               } else if (ug == "user") {
-                  updatelist(0);
+                  updatelist("usertime");
               }
           }
       });
@@ -696,7 +706,6 @@
 
   function timeConverter(UNIX_timestamp) {
       var a = new Date(UNIX_timestamp.slice(0, 10) * 1000);
-
       var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
       var year = a.getFullYear();
       var month = months[a.getMonth()];
