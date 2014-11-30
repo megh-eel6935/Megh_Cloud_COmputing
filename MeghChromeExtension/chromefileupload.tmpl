@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="Dashboard">
+    <meta name="keyword" content="Dashboard, Bootstrap, Admin, Template, Theme, Responsive, Fluid, Retina">
+
+    <!-- Bootstrap core CSS -->
+    <link href="assets/css/bootstrap_flatty.css" rel="stylesheet">
+    <!--external css-->
+    <link href="assets/css/font-awesome.min.css" rel="stylesheet" />
+
+    <!-- Custom styles for this template -->
+    <link href="assets/css/chromestyle.css" rel="stylesheet">
+    <link href="assets/css/style-responsive.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+    <section id="container">
+
+
+                    <div class="row">
+                        <div class="col-md-3">
+                            <br>
+                            <br>
+
+                            <label class="col-sm-2" for="inputTo">Send File To</label>
+                            <select class="form-control" id="groupslistupload">
+                                <option value="usertime">My timeline</option>
+                                
+                            </select>
+                               
+                    <input type="file" id="userfile" style="visibility: hidden;" />
+
+                            <form role="form" id="send-form" class="form-horizontal">
+
+                                <div class="form-group">
+                                    <label class="col-sm-2" for="inputTo">File Upload</label>
+                                    <div class="col-sm-10">
+                                        <div id="userdragandrophandler" onclick="document.getElementById('userfile').click(); return false;" >
+                                            <input class="form-control" id="inputTo" placeholder="click here to upload files" readonly>
+                                        </div>
+                                    </div>
+                                </div>
+
+
+                                <div class="col-sm-12">
+                                    <button type="button" id="userfilesend" class="btn btn-primary pull-right">Send <i class="fa fa-arrow-circle-right fa-lg"></i>
+                                    </button>
+                                </div>
+                            </form>
+
+                        </div>
+
+                    </div>
+                </div>
+                
+            </div>
+
+        </div>
+        </div>
+        
+
+        </div>
+     
+    </section>
+
+
+    <script src="js/jquery.min.js"></script>
+    <script>
+    window.paceOptions = {
+        ajax: {
+            trackMethods: ['GET', 'POST', 'PUT', 'DELETE', 'REMOVE']
+        }
+    };
+    </script>
+    <script src="js/pace.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+    <script src="chromemain.js"></script>
+     <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/jquery-jgrowl/1.2.12/jquery.jgrowl.min.css" />
+<script src="//cdnjs.cloudflare.com/ajax/libs/jquery-jgrowl/1.2.12/jquery.jgrowl.min.js"></script>
+<script type="text/javascript">
+           $.jGrowl.defaults.position = 'bottom-left';
+    </script>
+
+</body>
+
+</html>
