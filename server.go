@@ -16,20 +16,20 @@ import (
 	"github.com/smugmug/godynamo/conf"
 	"github.com/smugmug/godynamo/conf_file"
 	ep "github.com/smugmug/godynamo/endpoint"
-	delete_item "github.com/smugmug/godynamo/endpoints/delete_item"	
-	update_item "github.com/smugmug/godynamo/endpoints/update_item"
+	delete_item "github.com/smugmug/godynamo/endpoints/delete_item"
 	get "github.com/smugmug/godynamo/endpoints/get_item"
 	put "github.com/smugmug/godynamo/endpoints/put_item"
 	query "github.com/smugmug/godynamo/endpoints/query"
+	update_item "github.com/smugmug/godynamo/endpoints/update_item"
 	"github.com/smugmug/godynamo/types/attributevalue"
 	"github.com/smugmug/godynamo/types/condition"
 	"io"
 	"math/rand"
 	"net/http"
+	"sort"
 	"strconv"
 	"sync"
 	"time"
-	"sort"
 )
 
 // cookie handling
@@ -76,10 +76,9 @@ type GroupnamesJson struct {
 	Timestamp   string `json:"timestamp"`
 }
 
-
 type GroupSocketsJson struct {
-	Id          string `json:"group_id"`
-	SocketServer    string `json:"socketserver"`
+	Id           string `json:"group_id"`
+	SocketServer string `json:"socketserver"`
 }
 
 type GroupusernamesJson struct {
@@ -197,7 +196,7 @@ type groupdetailitem struct {
 	Timestamp    numd
 	Group_id     strd
 	Usergroup_id strd
-	Group_admin  strd	
+	Group_admin  strd
 }
 type groupdetail struct {
 	Item groupdetailitem
@@ -296,7 +295,7 @@ func (r *Group) messageOtherClients(client *Client, msg *Message) {
 }
 
 func newNotify() *Notify {
-	return &Notify{sync.Mutex{},make([]*Group, 0)}
+	return &Notify{sync.Mutex{}, make([]*Group, 0)}
 }
 
 func main() {
@@ -354,8 +353,7 @@ func main() {
 		}
 	})
 
-
-	m.Post("/login", binding.Form(Signin{}), func(signin Signin, r render.Render, response http.ResponseWriter, s sessions.Session) {
+	m.Post("/home", binding.Form(Signin{}), func(signin Signin, r render.Render, response http.ResponseWriter, s sessions.Session) {
 
 		//err := db.QueryRow("select id,password from username where username='" + signin.Email + "'").Scan(&id,&hashedPassword)
 		get1 := get.NewGetItem()
@@ -386,8 +384,8 @@ func main() {
 				r.HTML(200, "index", "Email or password is incorrect.Try again")
 			} else {
 				var servername []string
-				servername=decideServer(signin.Email)
-				setSession(signin.Email, publickey["S"].(string), response , servername)
+				servername = decideServer(signin.Email)
+				setSession(signin.Email, publickey["S"].(string), response, servername)
 				r.HTML(200, "user", signin.Email)
 			}
 		}
@@ -424,7 +422,7 @@ func main() {
 
 				r.HTML(200, "chromeindex", "Email or password is incorrect.Try again")
 			} else {
-				setSession(signin.Email, publickey["S"].(string), response ,nil)
+				setSession(signin.Email, publickey["S"].(string), response, nil)
 				r.HTML(200, "chromeuser", signin.Email)
 			}
 		}
@@ -481,7 +479,7 @@ func main() {
 
 				} else {
 
-					setSession(signin.Email, publickey["S"].(string), response ,nil)
+					setSession(signin.Email, publickey["S"].(string), response, nil)
 
 					r.JSON(200, map[string]interface{}{"status": "Success"})
 				}
@@ -909,171 +907,170 @@ func decideServer(username string) []string {
 
 	var groupmap = make(map[string]int)
 	var count int
-	fmt.Println("msg values",msgs)
-	for _, elem := range msgs {	
-		if elem.SocketServer !=""{
-		count = count+1
-		v, ok := groupmap[elem.SocketServer]
+	fmt.Println("msg values", msgs)
+	for _, elem := range msgs {
+		if elem.SocketServer != "" {
+			count = count + 1
+			v, ok := groupmap[elem.SocketServer]
 			if ok {
-			groupmap[elem.SocketServer]=v+1
-			}else{
-			groupmap[elem.SocketServer]=1
+				groupmap[elem.SocketServer] = v + 1
+			} else {
+				groupmap[elem.SocketServer] = 1
 			}
 
-		}	
+		}
 	}
 
+	var isempty bool = true
+	var values []int
+	var servernames []string
+	for k, v := range groupmap {
+		isempty = false
+		values = append(values, v)
+		servernames = append(servernames, k)
+	}
+	sort.Ints(values)
+	var topservername string
 
-		var isempty bool =true
-		var values []int
-		var servernames []string
+	fmt.Println("values", groupmap, servernames, topservername)
+	if !isempty {
+
+		top := values[len(values)-1]
 		for k, v := range groupmap {
-			isempty =false
-         	values = append(values, v)
-         	servernames = append(servernames, k)
-    	}
-    	sort.Ints(values)
-    	var topservername string
-
-    	fmt.Println("values",groupmap,servernames,topservername)
-    	if !isempty {
-    	
-			top := values[len(values)-1]
-			for k, v := range groupmap {
-	       		if v == top{
-	       			topservername = k
-	       		}	        
-	    	}
-   		 }else{
-
-   		 	topservername = getServername()
-
-   		 }
-
-	for _, elem := range msgs {	
-			fmt.Println(elem)
-		if elem.SocketServer ==""{
-		up1 := update_item.NewUpdateItem()
-        new_attr_val := topservername		
-        up1.TableName = "groups"
-        up1.Key["group_id"] = &attributevalue.AttributeValue{S:elem.Id}
-        up1.AttributeUpdates = attributevalue.NewAttributeValueUpdateMap()
-		up_avu := attributevalue.NewAttributeValueUpdate()
-		up_avu.Action = update_item.ACTION_PUT
-		up_avu.Value = &attributevalue.AttributeValue{S:new_attr_val}
-        up1.AttributeUpdates["socketserver"] = up_avu
-        up1.ReturnValues = update_item.RETVAL_ALL_NEW
-		update_item_json,update_item_json_err := json.Marshal(up1)
-		if (update_item_json_err != nil) {
-		fmt.Printf("%v\n",update_item_json_err)
-			
+			if v == top {
+				topservername = k
+			}
 		}
-		fmt.Printf("%s\n",string(update_item_json))
+	} else {
 
-        body,code,err := up1.EndpointReq()
-        if err != nil || code != http.StatusOK {
-               fmt.Printf("update item failed %d %v %s\n",code,err,body)
-              
-        }
-		fmt.Printf("%v\n%v\n,%v\n",body,code,err)	
-		fmt.Println("no scoket server")
+		topservername = getServername()
+
+	}
+
+	for _, elem := range msgs {
+		fmt.Println(elem)
+		if elem.SocketServer == "" {
+			up1 := update_item.NewUpdateItem()
+			new_attr_val := topservername
+			up1.TableName = "groups"
+			up1.Key["group_id"] = &attributevalue.AttributeValue{S: elem.Id}
+			up1.AttributeUpdates = attributevalue.NewAttributeValueUpdateMap()
+			up_avu := attributevalue.NewAttributeValueUpdate()
+			up_avu.Action = update_item.ACTION_PUT
+			up_avu.Value = &attributevalue.AttributeValue{S: new_attr_val}
+			up1.AttributeUpdates["socketserver"] = up_avu
+			up1.ReturnValues = update_item.RETVAL_ALL_NEW
+			update_item_json, update_item_json_err := json.Marshal(up1)
+			if update_item_json_err != nil {
+				fmt.Printf("%v\n", update_item_json_err)
+
+			}
+			fmt.Printf("%s\n", string(update_item_json))
+
+			body, code, err := up1.EndpointReq()
+			if err != nil || code != http.StatusOK {
+				fmt.Printf("update item failed %d %v %s\n", code, err, body)
+
+			}
+			fmt.Printf("%v\n%v\n,%v\n", body, code, err)
+			fmt.Println("no scoket server")
 		}
 	}
-	updateServerCount(count,topservername)
+	updateServerCount(count, topservername)
 	return servernames
 }
 
 func getServername() string {
 
-		get1 := get.NewGetItem()
-		get1.TableName = "groupdata"
-		get1.Key["group_id"] = &attributevalue.AttributeValue{S: "socketconnections"}
-		get1.Key["timestamp"] = &attributevalue.AttributeValue{S: "1024"}
-		body, code, err := get1.EndpointReq()
-		fmt.Println("body is %s", body)
-		if len(body) <= 2 || err != nil || code != http.StatusOK {
-			fmt.Printf("get failed %d %v %d \n", code, err, len(body))
+	get1 := get.NewGetItem()
+	get1.TableName = "groupdata"
+	get1.Key["group_id"] = &attributevalue.AttributeValue{S: "socketconnections"}
+	get1.Key["timestamp"] = &attributevalue.AttributeValue{S: "1024"}
+	body, code, err := get1.EndpointReq()
+	fmt.Println("body is %s", body)
+	if len(body) <= 2 || err != nil || code != http.StatusOK {
+		fmt.Printf("get failed %d %v %d \n", code, err, len(body))
+	} else {
+		payload := []byte(body)
+		var result map[string]interface{}
+		if err := json.Unmarshal(payload, &result); err != nil {
+			panic(err)
+		}
+		row := result["Item"].(map[string]interface{})
+		fmt.Println(row)
+		server1 := row["server1"].(map[string]interface{})
+		server2 := row["server2"].(map[string]interface{})
+		server1count, _ := strconv.Atoi(server1["S"].(string))
+		server2count, _ := strconv.Atoi(server2["S"].(string))
+		if server1count > server2count {
+			return "ec2-54-149-41-188.us-west-2.compute.amazonaws.com"
 		} else {
-			payload := []byte(body)
-			var result map[string]interface{}
-			if err := json.Unmarshal(payload, &result); err != nil {
-				panic(err)
-			}
-			row := result["Item"].(map[string]interface{})
-			fmt.Println(row)
-			server1 := row["server1"].(map[string]interface{})
-			server2 := row["server2"].(map[string]interface{})
-			server1count,_:=strconv.Atoi(server1["S"].(string))
-			server2count,_:=strconv.Atoi(server2["S"].(string))
-			if server1count>server2count{
-				return "ec2-54-149-41-188.us-west-2.compute.amazonaws.com"
-			}else{
-				return "ec2-54-149-42-11.us-west-2.compute.amazonaws.com"
-			}
+			return "ec2-54-149-42-11.us-west-2.compute.amazonaws.com"
+		}
 	}
 
 	return "ec2-54-149-41-188.us-west-2.compute.amazonaws.com"
 }
 
-func updateServerCount(count int,topservername string){
+func updateServerCount(count int, topservername string) {
 
 	var servername string
 	var newservercount int
-	if topservername=="ec2-54-149-41-188.us-west-2.compute.amazonaws.com" {
-			servername ="server1"
+	if topservername == "ec2-54-149-41-188.us-west-2.compute.amazonaws.com" {
+		servername = "server1"
 
-			}else{
-				servername ="server2"
-			}
+	} else {
+		servername = "server2"
+	}
 
-		get1 := get.NewGetItem()
-		get1.TableName = "groupdata"
-		get1.Key["group_id"] = &attributevalue.AttributeValue{S: "socketconnections"}
-		get1.Key["timestamp"] = &attributevalue.AttributeValue{S: "1024"}
-		body, code, err := get1.EndpointReq()
-		fmt.Println("body is %s", body)
-		if len(body) <= 2 || err != nil || code != http.StatusOK {
-			fmt.Printf("get failed %d %v %d \n", code, err, len(body))
-		} else {
-			payload := []byte(body)
-			var result map[string]interface{}
-			if err := json.Unmarshal(payload, &result); err != nil {
-				panic(err)
-			}
-			row := result["Item"].(map[string]interface{})
-			server := row[servername].(map[string]interface{})
+	get1 := get.NewGetItem()
+	get1.TableName = "groupdata"
+	get1.Key["group_id"] = &attributevalue.AttributeValue{S: "socketconnections"}
+	get1.Key["timestamp"] = &attributevalue.AttributeValue{S: "1024"}
+	body, code, err := get1.EndpointReq()
+	fmt.Println("body is %s", body)
+	if len(body) <= 2 || err != nil || code != http.StatusOK {
+		fmt.Printf("get failed %d %v %d \n", code, err, len(body))
+	} else {
+		payload := []byte(body)
+		var result map[string]interface{}
+		if err := json.Unmarshal(payload, &result); err != nil {
+			panic(err)
+		}
+		row := result["Item"].(map[string]interface{})
+		server := row[servername].(map[string]interface{})
 
-			servercount,_:=strconv.Atoi(server["S"].(string))
-			newservercount = servercount + count
-	
-			hk := "socketconnections"
+		servercount, _ := strconv.Atoi(server["S"].(string))
+		newservercount = servercount + count
+
+		hk := "socketconnections"
 		rk := "1024"
-       
-		up1 := update_item.NewUpdateItem()
-        
-        up1.TableName = "groupdata"
-        up1.Key["group_id"] = &attributevalue.AttributeValue{S: hk}
-        up1.Key["timestamp"] = &attributevalue.AttributeValue{S: rk}
 
-        up1.AttributeUpdates = attributevalue.NewAttributeValueUpdateMap()
+		up1 := update_item.NewUpdateItem()
+
+		up1.TableName = "groupdata"
+		up1.Key["group_id"] = &attributevalue.AttributeValue{S: hk}
+		up1.Key["timestamp"] = &attributevalue.AttributeValue{S: rk}
+
+		up1.AttributeUpdates = attributevalue.NewAttributeValueUpdateMap()
 		up_avu := attributevalue.NewAttributeValueUpdate()
 		up_avu.Action = update_item.ACTION_PUT
-		up_avu.Value = &attributevalue.AttributeValue{S:strconv.Itoa(newservercount)}
-        up1.AttributeUpdates["server1"] = up_avu
-        
-		update_item_json,update_item_json_err := json.Marshal(up1)
+		up_avu.Value = &attributevalue.AttributeValue{S: strconv.Itoa(newservercount)}
+		up1.AttributeUpdates["server1"] = up_avu
 
-		if (update_item_json_err != nil) {
-			fmt.Printf("%v\n",update_item_json_err)
-			
+		update_item_json, update_item_json_err := json.Marshal(up1)
+
+		if update_item_json_err != nil {
+			fmt.Printf("%v\n", update_item_json_err)
+
 		}
-		fmt.Printf("%s\n",string(update_item_json))
+		fmt.Printf("%s\n", string(update_item_json))
 
-        body,code,err := up1.EndpointReq()
-        if err != nil || code != http.StatusOK {
-               fmt.Printf("update item failed %d %v %s\n",code,err,body)
-              
-        }
+		body, code, err := up1.EndpointReq()
+		if err != nil || code != http.StatusOK {
+			fmt.Printf("update item failed %d %v %s\n", code, err, body)
+
+		}
 
 	}
 
@@ -1083,9 +1080,8 @@ func getGroupSocketsList(username string) ([]GroupSocketsJson, bool) {
 	msgs, _ := getGroupsList(username)
 	p := make([]GroupSocketsJson, 0)
 
-	
-	fmt.Println("msg values",msgs)
-	for _, elem := range msgs {	
+	fmt.Println("msg values", msgs)
+	for _, elem := range msgs {
 		get1 := get.NewGetItem()
 		get1.TableName = "groups"
 		get1.Key["group_id"] = &attributevalue.AttributeValue{S: elem.Id}
@@ -1101,15 +1097,13 @@ func getGroupSocketsList(username string) ([]GroupSocketsJson, bool) {
 			}
 			row := result["Item"].(map[string]interface{})
 			fmt.Println(row)
-			socketserver:= row["socketserver"].(map[string]interface{})
+			socketserver := row["socketserver"].(map[string]interface{})
 
-	
+			p = append(p, GroupSocketsJson{elem.Id, socketserver["S"].(string)})
 
-		p = append(p, GroupSocketsJson{elem.Id ,socketserver["S"].(string)})
-
+		}
 	}
-	}
-return p, true
+	return p, true
 }
 func sendNotificationsToAndroid(groupid string, username string, content string, content_type string) {
 
@@ -1331,7 +1325,6 @@ func getUserData(username string) ([]UserDataJson, bool) {
 	q.ScanIndexForward = z
 	q.Limit = 10000
 	q.KeyConditions["username"] = kc
-	
 
 	body, code, err := q.EndpointReq()
 	if err != nil || code != http.StatusOK {
@@ -1579,7 +1572,7 @@ func insertToGroupData(groupid string, username string, content string, ctype st
 }
 
 func uploadHandler(w http.ResponseWriter, r *http.Request, rend render.Render) {
-	
+
 	// write the content from POST to the file
 
 	userName := getUserName(r)
@@ -1591,19 +1584,19 @@ func uploadHandler(w http.ResponseWriter, r *http.Request, rend render.Render) {
 	}
 	if present {
 		file, header, err := r.FormFile("file") // the FormFile function takes in the POST input id file
-	defer file.Close()
+		defer file.Close()
 
-	if err != nil {
-		fmt.Fprintln(w, err)
-		return
-	}
+		if err != nil {
+			fmt.Fprintln(w, err)
+			return
+		}
 
-	l, _ := s3util.Create("https://s3-us-west-2.amazonaws.com/megh-uploads/"+header.Filename, nil, nil)
-	_, err2 := io.Copy(l, file)
-	l.Close()
-	if err2 != nil {
-		fmt.Fprintln(w, err)
-	}
+		l, _ := s3util.Create("https://s3-us-west-2.amazonaws.com/megh-uploads/"+header.Filename, nil, nil)
+		_, err2 := io.Copy(l, file)
+		l.Close()
+		if err2 != nil {
+			fmt.Fprintln(w, err)
+		}
 		if insertToUserData(userName, header.Filename, "file") {
 			rend.JSON(200, map[string]interface{}{"status": "success"})
 		} else {
@@ -1615,10 +1608,9 @@ func uploadHandler(w http.ResponseWriter, r *http.Request, rend render.Render) {
 	}
 
 }
- 
+
 func uploadurlHandler(w http.ResponseWriter, r *http.Request, rend render.Render) {
 
-	
 	// write the content from POST to the fil
 	userName := getUserName(r)
 
@@ -1629,25 +1621,25 @@ func uploadurlHandler(w http.ResponseWriter, r *http.Request, rend render.Render
 	}
 	if present {
 		r.ParseForm()
-    fmt.Println(r.Form)
-    fmt.Println(r.FormValue("url"))
+		fmt.Println(r.Form)
+		fmt.Println(r.FormValue("url"))
 
-    resp, err := http.Get(r.FormValue("url"))
-	defer resp.Body.Close()
-	
-	if err != nil {
-		fmt.Fprintln(w, err)
-		return
-	}
-	ctime := fmt.Sprintf("%v", time.Now().Unix())
-	filename:=ctime+""+r.FormValue("type")
+		resp, err := http.Get(r.FormValue("url"))
+		defer resp.Body.Close()
 
-	l, _ := s3util.Create("https://s3-us-west-2.amazonaws.com/megh-uploads/"+filename, nil, nil)
-	_, err2 := io.Copy(l, resp.Body)
-	l.Close()
-	if err2 != nil {
-		fmt.Fprintln(w, err)
-	}
+		if err != nil {
+			fmt.Fprintln(w, err)
+			return
+		}
+		ctime := fmt.Sprintf("%v", time.Now().Unix())
+		filename := ctime + "" + r.FormValue("type")
+
+		l, _ := s3util.Create("https://s3-us-west-2.amazonaws.com/megh-uploads/"+filename, nil, nil)
+		_, err2 := io.Copy(l, resp.Body)
+		l.Close()
+		if err2 != nil {
+			fmt.Fprintln(w, err)
+		}
 		if insertToUserData(userName, filename, "file") {
 			rend.JSON(200, map[string]interface{}{"status": "success"})
 		} else {
@@ -1658,9 +1650,8 @@ func uploadurlHandler(w http.ResponseWriter, r *http.Request, rend render.Render
 		rend.JSON(200, map[string]interface{}{"Access denied": "Unauthorized request"})
 	}
 
-}    
+}
 func groupUploadHandler(w http.ResponseWriter, r *http.Request, rend render.Render, params martini.Params) {
-	
 
 	userName := getUserName(r)
 
@@ -1671,19 +1662,19 @@ func groupUploadHandler(w http.ResponseWriter, r *http.Request, rend render.Rend
 	}
 	if present {
 		file, header, err := r.FormFile("file") // the FormFile function takes in the POST input id file
-	defer file.Close()
+		defer file.Close()
 
-	if err != nil {
-		fmt.Fprintln(w, err)
-		return
-	}
+		if err != nil {
+			fmt.Fprintln(w, err)
+			return
+		}
 
-	l, _ := s3util.Create("https://s3-us-west-2.amazonaws.com/megh-uploads/"+header.Filename, nil, nil)
-	_, err2 := io.Copy(l, file)
-	l.Close()
-	if err2 != nil {
-		fmt.Fprintln(w, err)
-	}
+		l, _ := s3util.Create("https://s3-us-west-2.amazonaws.com/megh-uploads/"+header.Filename, nil, nil)
+		_, err2 := io.Copy(l, file)
+		l.Close()
+		if err2 != nil {
+			fmt.Fprintln(w, err)
+		}
 
 		if insertToGroupData(params["id"], userName, header.Filename, "file") {
 			go sendNotificationsToAndroid(params["id"], userName, header.Filename, "file")
@@ -1698,9 +1689,8 @@ func groupUploadHandler(w http.ResponseWriter, r *http.Request, rend render.Rend
 
 }
 
-func groupUploadUrlHandler(w http.ResponseWriter, r *http.Request, rend render.Render,params martini.Params) {
+func groupUploadUrlHandler(w http.ResponseWriter, r *http.Request, rend render.Render, params martini.Params) {
 
-	
 	// write the content from POST to the fil
 	userName := getUserName(r)
 
@@ -1709,29 +1699,28 @@ func groupUploadUrlHandler(w http.ResponseWriter, r *http.Request, rend render.R
 	}
 	present := validateUsername(userName)
 
-	
 	if present {
-	r.ParseForm()
-    fmt.Println(r.Form)
-    fmt.Println(r.FormValue("url"))
+		r.ParseForm()
+		fmt.Println(r.Form)
+		fmt.Println(r.FormValue("url"))
 
-    resp, err := http.Get(r.FormValue("url"))
-	defer resp.Body.Close()
-	
-	if err != nil {
-		fmt.Fprintln(w, err)
-		return
-	}
-	ctime := fmt.Sprintf("%v", time.Now().Unix())
-	filename:=ctime+""+r.FormValue("type")
+		resp, err := http.Get(r.FormValue("url"))
+		defer resp.Body.Close()
 
-	l, _ := s3util.Create("https://s3-us-west-2.amazonaws.com/megh-uploads/"+filename, nil, nil)
-	_, err2 := io.Copy(l, resp.Body)
-	l.Close()
-	if err2 != nil {
-		fmt.Fprintln(w, err)
-	}
-		if insertToGroupData(params["id"], userName, filename, "file")  {
+		if err != nil {
+			fmt.Fprintln(w, err)
+			return
+		}
+		ctime := fmt.Sprintf("%v", time.Now().Unix())
+		filename := ctime + "" + r.FormValue("type")
+
+		l, _ := s3util.Create("https://s3-us-west-2.amazonaws.com/megh-uploads/"+filename, nil, nil)
+		_, err2 := io.Copy(l, resp.Body)
+		l.Close()
+		if err2 != nil {
+			fmt.Fprintln(w, err)
+		}
+		if insertToGroupData(params["id"], userName, filename, "file") {
 			go sendNotificationsToAndroid(params["id"], userName, filename, "file")
 			rend.JSON(200, map[string]interface{}{"status": "success"})
 		} else {
@@ -1744,7 +1733,7 @@ func groupUploadUrlHandler(w http.ResponseWriter, r *http.Request, rend render.R
 
 }
 
-func setSession(userName string, publickey string, response http.ResponseWriter,servernames []string) {
+func setSession(userName string, publickey string, response http.ResponseWriter, servernames []string) {
 	value := map[string]string{
 		"name": userName,
 	}
@@ -1765,23 +1754,23 @@ func setSession(userName string, publickey string, response http.ResponseWriter,
 			Value: userName,
 			Path:  "/",
 		}
-		if servernames != nil{
-		var finalservername string
-		for _,element := range servernames {
-  			finalservername = finalservername+";"+element
+		if servernames != nil {
+			var finalservername string
+			for _, element := range servernames {
+				finalservername = finalservername + ";" + element
+			}
+			fmt.Println("finalservername is ", finalservername, servernames)
+			cookie4 := &http.Cookie{
+				Name:  "servernames",
+				Value: finalservername,
+				Path:  "/",
+			}
+			http.SetCookie(response, cookie4)
 		}
-		fmt.Println("finalservername is ",finalservername,servernames)
-		cookie4 := &http.Cookie{
-			Name:  "servernames",
-			Value: finalservername,
-			Path:  "/",
-		}
-		http.SetCookie(response, cookie4)
-	}
 		http.SetCookie(response, cookie)
 		http.SetCookie(response, cookie2)
 		http.SetCookie(response, cookie3)
-		
+
 	}
 }
 
@@ -1805,11 +1794,11 @@ func clearSession(response http.ResponseWriter) {
 		MaxAge: -1,
 	}
 	cookie4 := &http.Cookie{
-			Name:  "servernames",
-			Value: "",
-			Path:  "/",
-			MaxAge: -1,
-		}
+		Name:   "servernames",
+		Value:  "",
+		Path:   "/",
+		MaxAge: -1,
+	}
 	http.SetCookie(response, cookie)
 	http.SetCookie(response, cookie2)
 	http.SetCookie(response, cookie3)
@@ -1819,7 +1808,7 @@ func clearSession(response http.ResponseWriter) {
 
 func getUserName(request *http.Request) (userName string) {
 	if cookie, err := request.Cookie("session"); err == nil {
-		fmt.Println("cookies",cookie,cookie.Value)
+		fmt.Println("cookies", cookie, cookie.Value)
 		cookieValue := make(map[string]string)
 		if err = cookieHandler.Decode("session", cookie.Value, &cookieValue); err == nil {
 			userName = cookieValue["name"]
@@ -1830,15 +1819,13 @@ func getUserName(request *http.Request) (userName string) {
 
 func getUserNameFromCookie(username string) (userName string) {
 
-		cookieValue := make(map[string]string)
-		var user string
-		
-		if err := cookieHandler.Decode("session", username, &cookieValue); err == nil {
-			user = cookieValue["name"]
-		}
-	fmt.Println("username of the group",user)
-	
+	cookieValue := make(map[string]string)
+	var user string
+
+	if err := cookieHandler.Decode("session", username, &cookieValue); err == nil {
+		user = cookieValue["name"]
+	}
+	fmt.Println("username of the group", user)
+
 	return user
 }
-
-
